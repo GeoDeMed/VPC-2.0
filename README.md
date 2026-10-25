@@ -30,6 +30,7 @@ Seules les lignes qui contiennent ces trois mentions doivent différer.
 | `schema.sql` | Tables pour MySQL (SQLite crée les siennes seul) |
 | `config.sample.php` | Modèle de réglages. Le vrai `config.php` n'est jamais publié |
 | `fonts/` | Police Inter et sa licence |
+| `img/` | Icônes (onglet, iPhone, Android) et `site.webmanifest` |
 | `build/` | Sources de `index.html` |
 | `LISEZMOI.md` | Notice d'installation |
 

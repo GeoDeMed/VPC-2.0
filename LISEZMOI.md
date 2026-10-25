@@ -35,6 +35,8 @@ Après une modification de `build/parts/`, reconstruisez `index.html` : `python3
 
 Le dossier `fonts` contient la police Inter (licence SIL Open Font License, jointe), utilisée par tout le site.
 
+Le dossier `img` contient les icônes du site (onglet du navigateur, écran d’accueil iPhone et Android) et le fichier `site.webmanifest`.
+
 Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (par exemple `DOSSIER-DU-SITE`), en remplaçant les fichiers existants. Ne touchez pas à `config.php` ni au dossier des données (`DOSSIER-DES-DONNEES`) déjà en ligne. Pensez aux fichiers qui commencent par un point (`.htaccess` et `DOSSIER-DES-DONNEES/.htaccess`) : certains logiciels FTP les masquent.
 
 ## 3. Vérifier
