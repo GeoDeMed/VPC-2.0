@@ -68,6 +68,32 @@ i = s.index('<style>') + len('<style>')
 s = s[:i] + '\n' + FONTS + s[i:]
 
 # --- Styles propres à l'application ---
+# Collaboration : lire l'état courant et appliquer un état fusionné sans recharger la page.
+rep("""  render();
+
+  // ---------- Partage et export ----------""", """  render();
+  window.__VPC_STATE__ = ()=>JSON.parse(JSON.stringify(state));
+  // Les pastilles glissent avec inertie vers leur nouvelle place ; les nouvelles apparaissent, les supprimées s'effacent.
+  window.__VPC_APPLY__ = s=>{
+    const before = new Map([...layer.querySelectorAll('.note')].map(el=>[el.dataset.id, el]));
+    state = normalize(s);
+    document.querySelectorAll('[data-meta]').forEach(el=>{ if (el !== document.activeElement) el.value = state[el.dataset.meta]; });
+    render();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    layer.querySelectorAll('.note').forEach(el=>{
+      const old = before.get(el.dataset.id); before.delete(el.dataset.id);
+      if (!old){ el.classList.add('arrive'); setTimeout(()=>el.classList.remove('arrive'), 700); return; }
+      if (old.style.left === el.style.left && old.style.top === el.style.top) return;
+      const to = [el.style.left, el.style.top];
+      el.style.left = old.style.left; el.style.top = old.style.top; void el.offsetWidth;
+      el.classList.add('glide'); el.style.left = to[0]; el.style.top = to[1];
+      setTimeout(()=>el.classList.remove('glide'), 1000);
+    });
+    before.forEach(old=>{ old.classList.add('leave'); old.tabIndex = -1; layer.appendChild(old); setTimeout(()=>old.remove(), 500); });
+  };
+
+  // ---------- Partage et export ----------""")
+
 rep('</style>', '''
 /* Application */
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
