@@ -562,27 +562,45 @@
       else if (!e.status) $('error-msg').textContent = 'Ce canevas n\'a pas pu être déchiffré.';
       return;
     }
-    const saved = $('saved');
-    let timer = null, pending = null, rev = c.rev, stopped = false, last = data, busy = Promise.resolve();
-    const payload = async d=>({meta_ct: await K.encJSON(ck.key, {title: titleOf(d), owner: meta.owner}), data_ct: await K.encJSON(ck.key, d)});
+    const saved = $('saved'), myName = ME.name || ME.email;
+    // base : le dernier état connu du serveur, point de départ de la fusion avec les modifications des autres.
+    let timer = null, pending = null, rev = c.rev, stopped = false, last = data, base = data || {}, busy = Promise.resolve();
+    const payload = async d=>({meta_ct: await K.encJSON(ck.key, {title: titleOf(d), owner: meta.owner, by: myName}), data_ct: await K.encJSON(ck.key, d)});
     async function flush(keepalive){
       if (!pending || stopped) return;
       const d = pending; pending = null; clearTimeout(timer); timer = null;
-      try { rev = (await api('save',{body:Object.assign({id, rev}, await payload(d)), keepalive})).rev; if (!pending) saved.textContent = 'Enregistré'; }
+      try { rev = (await api('save',{body:Object.assign({id, rev}, await payload(d)), keepalive})).rev; base = d; live.seen(rev); if (!pending) saved.textContent = 'Enregistré'; }
       catch(e){
         if (!pending) pending = d;
-        if (e.status===409){
-          stopped = true;
-          saved.innerHTML = 'Modifié entre-temps par une autre personne. Vos dernières modifications ne sont pas enregistrées.<button class="btn primary" type="button">Recharger</button>';
-          saved.querySelector('button').addEventListener('click', ()=>location.reload());
-          return;
-        }
+        // Quelqu'un a enregistré entre-temps : on fusionne ses modifications avec les vôtres, puis on enregistre.
+        if (e.status===409 && !keepalive){ await sync(true); return; }
+        if (e.status===409) return;
         saved.textContent = e.status===401 ? 'Session expirée : rechargez la page pour vous reconnecter.' : 'Enregistrement impossible, nouvel essai…';
-        if (e.status!==401) timer = setTimeout(()=>flush(false), 5000);
+        if (e.status!==401) timer = setTimeout(()=>queue(()=>flush(false)), 5000);
+        else stopped = true;
       }
     }
+    // Récupère la dernière version, la fusionne pastille par pastille avec l'écran, et enregistre le résultat s'il contient vos modifications.
+    async function sync(auto){
+      let c2, R;
+      try {
+        c2 = await api('get',{qs:'id='+encodeURIComponent(id)});
+        ck = await K.canvasKey(await K.unwrap(ME, c2.wrap));
+        R = await K.decJSON(ck.key, c2.data_ct);
+      } catch(e){ live.say('La mise à jour a échoué. Réessayez.', 4000); return; }
+      const L = window.__VPC_STATE__(), m = mergeCanvas(base, L, R);
+      if (JSON.stringify(m.state) !== JSON.stringify(L)) window.__VPC_APPLY__(m.state);
+      base = R; rev = c2.rev; last = m.state; live.seen(rev);
+      if (c2.role !== 'view' && JSON.stringify(m.state) !== JSON.stringify(R)){ pending = m.state; await flush(false); }
+      else { pending = null; clearTimeout(timer); timer = null; if (c2.role !== 'view') saved.textContent = 'Enregistré'; }
+      if (m.conflicts) live.say(m.conflicts > 1 ? m.conflicts+' éléments modifiés des deux côtés : votre version est gardée.' : 'Un élément modifié des deux côtés : votre version est gardée.', 5000);
+      else if (auto) live.say('Fusionné avec les modifications d’une autre personne.', 3500);
+      else live.hide();
+    }
     const queue = fn=>(busy = busy.then(fn, fn));
-    window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 800); };
+    const live = liveSync({id, rev: c.rev, shared: c.role !== 'owner' || (c.shares||[]).length > 0, myName,
+      getRev: ()=>rev, keyNow: ()=>ck, queue, onUpdate: ()=>queue(()=>sync(false))});
+    window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); live.active(); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 800); };
     window.addEventListener('pagehide', ()=>flush(true));
     document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flush(true); });
     window.__VPC_COPY__ = async ()=>{
@@ -601,6 +619,78 @@
       $('banner').hidden = false;
       $('banner-text').textContent = 'Canevas de '+meta.owner+', partagé avec vous en modification. Vos changements sont enregistrés pour tous.';
     }
+  }
+
+  // ---------- Collaboration en direct ----------
+  // Fusion à trois voies : B = dernier état commun, L = votre écran, R = la version du serveur.
+  // Champ par champ, ce que vous n'avez pas modifié prend la valeur du serveur ; ce que vous avez modifié est gardé.
+  function mergeCanvas(B, L, R){
+    B = B || {}; const same = (a, b)=>JSON.stringify(a) === JSON.stringify(b), out = {};
+    let conflicts = 0;
+    new Set([...Object.keys(B), ...Object.keys(L), ...Object.keys(R)]).forEach(k=>{
+      if (k === 'notes') return;
+      out[k] = same(L[k], B[k]) ? R[k] : L[k];
+      if (!same(L[k], B[k]) && !same(R[k], B[k]) && !same(L[k], R[k])) conflicts++;
+    });
+    const map = s=>new Map((Array.isArray(s.notes) ? s.notes : []).filter(n=>n && n.id).map(n=>[n.id, n]));
+    const bm = map(B), lm = map(L), rm = map(R), notes = [];
+    new Set([...rm.keys(), ...lm.keys()]).forEach(nid=>{
+      const b = bm.get(nid), l = lm.get(nid), r = rm.get(nid);
+      if (l && r){
+        if (!b){ notes.push(l); return; }
+        const n = {}; let clash = false;
+        new Set([...Object.keys(l), ...Object.keys(r)]).forEach(f=>{
+          n[f] = same(l[f], b[f]) ? r[f] : l[f];
+          if (!same(l[f], b[f]) && !same(r[f], b[f]) && !same(l[f], r[f])) clash = true;
+        });
+        if (clash) conflicts++;
+        notes.push(n);
+      } else if (l){
+        if (!b || !same(l, b)) notes.push(l);        // ajoutée ici, ou modifiée ici alors qu'elle a été supprimée ailleurs
+      } else if (r && !b) notes.push(r);              // ajoutée ailleurs ; supprimée ici : elle reste supprimée
+    });
+    const seen = new Set(); let max = notes.reduce((m, n)=>Math.max(m, +n.n || 0), 0);
+    notes.forEach(n=>{ if (seen.has(n.n)) n.n = ++max; seen.add(n.n); });   // deux pastilles créées en même temps
+    out.notes = notes;
+    return {state: out, conflicts};
+  }
+
+  // Vérification légère des changements : seulement si le canevas est partagé et l'onglet visible,
+  // toutes les 2 secondes après une activité, puis de plus en plus espacée jusqu'à 15 secondes.
+  function liveSync(o){
+    let delay = 2000, t = null, shown = 0, hideT = null;
+    const el = document.createElement('div');
+    el.className = 'sync-bubble'; el.setAttribute('role', 'status'); el.hidden = true;
+    el.innerHTML = '<span class="sb-text"></span><button type="button" class="sb-go" aria-label="Mettre à jour le canevas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19.8 4.2v4.6h-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+    document.body.appendChild(el);
+    const txt = el.querySelector('.sb-text'), go = el.querySelector('.sb-go');
+    const open = ()=>{ el.hidden = false; requestAnimationFrame(()=>el.classList.add('on')); };
+    const hide = ()=>{ clearTimeout(hideT); el.classList.remove('on'); hideT = setTimeout(()=>{ el.hidden = true; }, 350); };
+    go.addEventListener('click', ()=>{ go.disabled = true; o.onUpdate(); });
+    async function poll(){
+      if (document.hidden) return;
+      const r = await api('rev',{qs:'id='+encodeURIComponent(o.id)+'&rev='+o.getRev()}).catch(()=>null);
+      if (!r || r.rev === o.getRev() || r.rev === shown) return;
+      shown = r.rev; delay = 2000;
+      let by = '';
+      try { by = (await K.decJSON(o.keyNow().key, r.meta_ct)).by || ''; } catch(e){}
+      clearTimeout(hideT); go.hidden = false; go.disabled = false;
+      txt.textContent = !by ? 'Le canevas a été modifié' : by === o.myName ? 'Vous avez modifié ce canevas ailleurs' : by+' a modifié le canevas';
+      open();
+    }
+    function tick(){
+      clearTimeout(t);
+      if (!o.shared) return;
+      t = setTimeout(async ()=>{ await o.queue(poll); delay = Math.min(15000, Math.round(delay * 1.5)); tick(); }, delay);
+    }
+    document.addEventListener('visibilitychange', ()=>{ if (!document.hidden){ delay = 2000; clearTimeout(t); t = setTimeout(tick, 0); o.shared && o.queue(poll); } });
+    tick();
+    return {
+      active(){ if (delay > 2000){ delay = 2000; tick(); } },
+      seen(r){ if (r >= shown){ shown = r; if (!go.hidden && el.classList.contains('on')) hide(); } },
+      say(m, ms){ clearTimeout(hideT); txt.textContent = m; go.hidden = true; open(); hideT = setTimeout(hide, ms); },
+      hide
+    };
   }
 
   // ---------- Collaborateurs ----------

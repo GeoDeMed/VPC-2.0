@@ -153,3 +153,27 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 /* Page Inviter : mêmes dimensions que les champs de connexion */
 .co-select{font-size:17px;line-height:1.38;padding:15px 44px 15px 16px;border-radius:14px;background-position:right 16px center}
 #co-emails{font-size:17px;line-height:1.4;padding:15px 16px;border-radius:14px}
+/* Collaboration : bulle bleue en verre dépoli, qui se déplie depuis le haut de l'écran */
+.sync-bubble{position:fixed;top:12px;left:50%;z-index:60;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);box-sizing:border-box;
+  padding:8px 8px 8px 18px;border-radius:999px;color:#fff;font-size:14px;line-height:1.3;
+  background:color-mix(in srgb,var(--ui) 78%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  box-shadow:0 10px 30px rgba(0,0,0,.18);opacity:0;transform:translate(-50%,-140%) scale(.6);transform-origin:50% 0;
+  transition:transform .5s cubic-bezier(.2,.9,.3,1.15),opacity .25s ease}
+.sync-bubble.on{opacity:1;transform:translate(-50%,0) scale(1)}
+.sync-bubble .sb-go[hidden]{display:none}
+.sync-bubble:has(.sb-go[hidden]){padding-right:18px}
+.sb-text{overflow-wrap:anywhere}
+.sb-go{appearance:none;flex:none;width:32px;height:32px;border:0;border-radius:50%;padding:0;cursor:pointer;display:grid;place-items:center;
+  color:var(--ui);background:#fff;transition:transform .3s ease}
+.sb-go:hover{transform:rotate(-30deg)}
+.sb-go:disabled{opacity:.6;cursor:default}
+.sb-go:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.sb-go svg{width:18px;height:18px}
+@media (prefers-reduced-motion: reduce){.sync-bubble{transition:opacity .2s ease;transform:translate(-50%,0)}}
+@media print{.sync-bubble{display:none!important}}
+/* Pastilles mises à jour par un collaborateur */
+.note.glide{transition:left .9s cubic-bezier(.16,1,.3,1),top .9s cubic-bezier(.16,1,.3,1)}
+.note.arrive{animation:note-arrive .6s cubic-bezier(.2,.9,.3,1.25) both}
+.note.leave{pointer-events:none;animation:note-leave .45s ease both}
+@keyframes note-arrive{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes note-leave{to{opacity:0;transform:translate(-50%,-50%) scale(.3)}}

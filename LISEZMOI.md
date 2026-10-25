@@ -60,7 +60,7 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
 - **Mot de passe oublié :**
   - Avec la clé de secours, tout est conservé.
   - Sans elle, le compte repart vide : les canevas de la personne sont perdus, personne ne peut les déchiffrer.
-- **Modifications simultanées :** si deux personnes modifient le même canevas en même temps, la seconde est prévenue et recharge la page. Rien n'est écrasé sans qu'on le sache.
+- **Collaboration en direct :** quand un canevas est partagé et ouvert, l'application vérifie discrètement s'il a changé (toutes les 2 secondes après une activité, puis jusqu'à toutes les 15 secondes au calme, et jamais dans un onglet masqué). Une bulle bleue annonce « … a modifié le canevas » ; la flèche ↻ met le canevas à jour sur place, les pastilles glissant vers leur nouvelle place. Si deux personnes enregistrent en même temps, les modifications sont fusionnées pastille par pastille ; sur un même élément modifié des deux côtés, la version de la personne qui enregistre est gardée et elle en est prévenue.
 
 ## Pied de page et pages légales
 

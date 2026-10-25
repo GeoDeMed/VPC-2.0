@@ -362,7 +362,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if ($method === 'POST' && ($_SERVER['HTTP_X_VPC'] ?? '') !== '1') {
     fail(400, 'requête refusée');
 }
-if ($method !== 'POST' && !in_array($action, ['config', 'check', 'me', 'keys', 'list', 'get'], true)) {
+if ($method !== 'POST' && !in_array($action, ['config', 'check', 'me', 'keys', 'list', 'get', 'rev'], true)) {
     fail(405, 'méthode');
 }
 
@@ -584,6 +584,30 @@ try {
                 'updated_at' => $row['updated_at'],
                 'shares' => $row['role'] === 'owner' ? shares_of($row['id']) : [],
             ]);
+
+        // Vérification légère pour la collaboration : le numéro de version du canevas, et sa fiche chiffrée
+        // (titre, auteur de la dernière modification) seulement si ce numéro a changé. Le contenu n'est pas lu.
+        case 'rev':
+            $u = current_user();
+            $id = (string) ($_GET['id'] ?? '');
+            $st = db()->prepare('SELECT owner_id, rev FROM vpc_canvases WHERE id = ?');
+            $st->execute([$id]);
+            $row = $st->fetch();
+            if ($row && (int) $row['owner_id'] !== $u['id']) {
+                $st = db()->prepare('SELECT 1 FROM vpc_shares WHERE canvas_id = ? AND email_hash = ?');
+                $st->execute([$id, $u['email_hash']]);
+                $row = $st->fetch() ? $row : false;
+            }
+            if (!$row) {
+                fail(404, 'introuvable');
+            }
+            $res = ['rev' => (int) $row['rev']];
+            if ($res['rev'] !== (int) ($_GET['rev'] ?? 0)) {
+                $st = db()->prepare('SELECT meta_ct FROM vpc_canvases WHERE id = ?');
+                $st->execute([$id]);
+                $res['meta_ct'] = $st->fetchColumn();
+            }
+            out(200, $res);
 
         case 'create':
             $u = current_user();
