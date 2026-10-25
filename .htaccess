@@ -23,4 +23,7 @@ RedirectMatch 404 ^.*/DOSSIER-DES-DONNEES/.*$
 
 <IfModule mod_mime.c>
   AddType font/woff2 .woff2
+  AddType image/x-icon .ico
+  AddType image/svg+xml .svg
+  AddType application/manifest+json .webmanifest
 </IfModule>

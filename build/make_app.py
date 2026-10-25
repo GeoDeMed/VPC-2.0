@@ -1,5 +1,5 @@
 # Construit l'application connectée (vpc-app/index.html) à partir de la page du canevas.
-import base64, os
+import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -39,7 +39,11 @@ s = s[:i] + "  document.getElementById('b-fork').addEventListener('click', ()=>w
 # --- HTML de l'éditeur ---
 rep('<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>\n', '')
 # --- Icône de l'onglet : le point saumon de mindcrakle. ---
-rep('<title>Canevas de proposition de valeur</title>', '<title>Canevas de proposition de valeur</title>\n<link rel="icon" type="image/png" href="data:image/png;base64,' + base64.b64encode(open(HERE + '/parts/favicon.png', 'rb').read()).decode() + '">')
+rep('<title>Canevas de proposition de valeur</title>', '<title>Canevas de proposition de valeur</title>\n'
+    '<link rel="icon" href="img/favicon.ico" sizes="48x48">\n'
+    '<link rel="icon" href="img/favicon.svg" type="image/svg+xml">\n'
+    '<link rel="apple-touch-icon" href="img/apple-touch-icon.png">\n'
+    '<link rel="manifest" href="img/site.webmanifest">')
 rep('      <button class="btn ghostb hosted-only" id="b-share" type="button">Copier le lien de partage</button>\n', '')
 rep('<button class="btn primary" id="b-fork" type="button">Modifier une copie</button>',
     '<button class="btn primary" id="b-fork" type="button">Dupliquer dans mes canevas</button>')
