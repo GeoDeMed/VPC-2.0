@@ -1,0 +1,6 @@
+config.php
+DOSSIER-DES-DONNEES/*
+!DOSSIER-DES-DONNEES/.htaccess
+*.sqlite
+*.key
+.DS_Store

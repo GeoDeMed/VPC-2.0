@@ -1,0 +1,26 @@
+AddDefaultCharset UTF-8
+Options -Indexes
+
+# HTTPS obligatoire
+RewriteEngine On
+RewriteCond %{SERVER_PORT} 80
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Facultatif : renvoi définitif d'une ancienne adresse vers la nouvelle (retirez les # pour l'activer).
+# RewriteCond %{HTTP_HOST} ^ANCIENNE-ADRESSE$ [NC]
+# RewriteRule ^ https://ADRESSE-DU-SITE%{REQUEST_URI} [L,R=301]
+
+# Fichiers internes inaccessibles depuis le web
+<FilesMatch "(^(config\.php|config\.sample\.php|schema\.sql|LISEZMOI\.md|\.ovhconfig)|\.sqlite|\.key)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 ^.*/DOSSIER-DES-DONNEES/.*$
+
+<IfModule mod_headers.c>
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+</IfModule>
