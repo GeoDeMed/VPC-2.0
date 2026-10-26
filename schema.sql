@@ -50,3 +50,13 @@ CREATE TABLE IF NOT EXISTS vpc_shares (
   INDEX idx_share_email (email_hash),
   CONSTRAINT fk_vpc_share_canvas FOREIGN KEY (canvas_id) REFERENCES vpc_canvases (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Présence sur les canevas partagés : nom chiffré par la clé du canevas, heure du dernier signal.
+CREATE TABLE IF NOT EXISTS vpc_presence (
+  canvas_id CHAR(12) NOT NULL,
+  email_hash CHAR(64) NOT NULL,
+  name_ct TEXT NOT NULL,
+  seen_at DATETIME NOT NULL,
+  PRIMARY KEY (canvas_id, email_hash),
+  CONSTRAINT fk_vpc_presence_canvas FOREIGN KEY (canvas_id) REFERENCES vpc_canvases (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

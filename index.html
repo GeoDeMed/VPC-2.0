@@ -128,6 +128,33 @@ input:focus,textarea:focus{outline:none;border-bottom-color:var(--ui)}
 @keyframes pulse{0%,100%{transform:translate(-50%,-50%)}40%{transform:translate(-50%,-50%) scale(1.25)}}
 .ghost{position:fixed;width:52px;height:52px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100}
 .legend{font-size:12px;color:var(--muted);margin:10px 4px 0}
+/* Affichage Bulles / Texte */
+.seg{display:inline-flex;flex:none;align-self:center;background:var(--zone-strong,#E8E8ED);border-radius:9px;padding:2px;gap:2px}
+.seg button{appearance:none;border:0;background:transparent;font:500 13px/1 var(--sans);color:var(--ink);padding:7px 13px;border-radius:7px;display:flex;gap:6px;align-items:center;cursor:pointer;transition:background .2s,box-shadow .2s}
+.seg button[aria-pressed="true"]{background:var(--page);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.06)}
+.seg button:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
+.seg svg{width:14px;height:14px}
+#co-lines,#callouts{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#co-lines{overflow:visible}
+#callouts>*{pointer-events:auto}
+.stage:not(.textmode) #co-lines,.stage:not(.textmode) #callouts{display:none}
+.textmode #art .leader,.textmode #art .leader-dot,.textmode #art .co-fo{display:none}
+.board-scroll .stage.textmode{min-width:980px}
+.cline{fill:none;stroke:var(--muted);stroke-width:1.3}
+.cdot{fill:var(--muted)}
+.cbox{position:absolute;box-sizing:border-box;width:calc(228/1200*100%);display:flex;gap:.8cqw;align-items:flex-start;padding:.85cqw 1cqw;border-radius:1.2cqw;background:var(--page);border:1px solid var(--rule);box-shadow:0 2px 10px rgba(0,0,0,.06);transition:top .45s cubic-bezier(.16,1,.3,1),box-shadow .2s,border-color .2s}
+.cbox{user-select:text;-webkit-user-select:text}
+.cbox:focus-within{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 20%,transparent),0 2px 10px rgba(0,0,0,.06)}
+.cbox .chipn{flex:none;min-width:2.2cqw;height:2.2cqw;border-radius:1.1cqw;display:grid;place-items:center;font:700 .95cqw/1 var(--sans);color:var(--n-ink);padding:0 .35cqw;box-sizing:border-box;border:0;cursor:pointer}
+.cbox .cb-body{flex:1;min-width:0;display:grid;gap:.25cqw}
+.cbox input,.cbox textarea{font:inherit;border:0;background:transparent;padding:0;margin:0;outline:0;width:100%;color:var(--ink);resize:none;overflow:hidden}
+.cbox input{font-size:1.15cqw;font-weight:600;line-height:1.3}
+.cbox textarea{font-size:1.02cqw;line-height:1.38;color:var(--muted);display:block}
+.cbox input::placeholder,.cbox textarea::placeholder{color:var(--muted);opacity:.55}
+.cb-subst{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.cb-subst .cbox{position:relative;width:calc(228/1200*100%);min-width:200px}
+.stage:not(.textmode)~.cb-subst{display:none}
+@media (prefers-reduced-motion:reduce){.cbox{transition:none}}
 .c-jaune{background:var(--n-jaune)} .c-vert{background:var(--n-vert)} .c-bleu{background:var(--n-bleu)} .c-rouge{background:var(--n-rouge)} .c-gris{background:var(--n-gris)}
 
 /* Vue éclatée */
@@ -476,6 +503,28 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 .name-form input{flex:1 1 220px;min-width:0;font:inherit;font-size:17px;color:var(--ink);background:var(--page);border:1px solid var(--rule);border-radius:14px;padding:12px 14px;outline:0}
 .name-form input:focus{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 18%,transparent)}
 .li-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+/* Présence : qui est sur le canevas */
+.presence{position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 6px}
+.pres-stack{appearance:none;border:0;background:transparent;padding:2px;display:flex;cursor:pointer;border-radius:22px}
+.pres-stack:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
+.presence .av{position:relative;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:13px;line-height:1;color:#fff;border:2.5px solid var(--page);margin-left:-8px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.pres-stack .av:first-child{margin-left:0}
+.presence .av i{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;border:2px solid var(--page);background:#34C759}
+.presence .av.off{filter:grayscale(1) opacity(.55)}.presence .av.off i{background:#AEAEB2}
+.presence .av.me{outline:2px solid var(--ui);outline-offset:1px}
+.presence .av.more{background:var(--zone-strong,#E8E8ED);color:var(--muted);font-size:11px}
+.pres-txt{font-size:14px;color:var(--muted)}.pres-txt b{color:var(--ink);font-weight:600}
+.pres-pop{position:absolute;left:0;top:calc(100% + 8px);z-index:60;width:min(320px,calc(100vw - 32px));box-sizing:border-box;padding:8px;border-radius:16px;
+  background:color-mix(in srgb,var(--page) 82%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  border:1px solid var(--rule);box-shadow:0 18px 50px rgba(0,0,0,.16);animation:pop-in .22s cubic-bezier(.16,1,.3,1)}
+.pres-pop h4{margin:6px 10px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pres-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px}
+.pres-row .av{margin:0;width:30px;height:30px;border:0;box-shadow:none}
+.pres-row div{flex:1;min-width:0}.pres-row b{display:block;font-size:14px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}.pres-row small{font-size:12px;color:var(--muted)}
+.pres-row .st{font-size:12px;color:var(--muted);white-space:nowrap}.pres-row .st.on{color:#1E7B34}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pres-row .st.on{color:#30D158}}
+@keyframes pop-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pres-pop{animation:none}}
 @media print{.topbar{display:none!important}}
 </style>
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -737,11 +786,17 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
         <label class="sr" for="f-custom">Couleur personnalisée</label><input class="sr" id="f-custom" type="color" value="#C9B6FF" tabindex="-1">
       </div>
       <p class="tip">Glissez une pastille sur une zone, ou double-cliquez dans une zone. Le nuancier, à droite, ouvre une couleur personnalisée. Cliquez sur une pastille pour aller à sa fiche.</p>
+      <div class="seg" role="group" aria-label="Affichage du schéma">
+        <button type="button" data-mode="bulles" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="6" r="3" fill="currentColor" opacity=".55"/><circle cx="11" cy="10" r="3" fill="currentColor"/></svg>Bulles</button>
+        <button type="button" data-mode="texte" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 6.5h7M4.5 9.5h4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Texte</button>
+      </div>
     </div>
 
     <div class="board-scroll">
       <div class="stage" id="stage">
         <svg id="art" viewBox="0 -28 1200 1968" aria-hidden="true"></svg>
+        <svg id="co-lines" viewBox="0 -28 1200 1968" aria-hidden="true"></svg>
+        <div id="callouts"></div>
         <div id="notes"></div>
       </div>
     </div>
@@ -924,8 +979,8 @@ window.__VPC_START__ = function(){
     ];
     CO.forEach(([id,side,b,pts])=>{
       const z = ZL[id], end = pts[pts.length-1];
-      h += '<path class="leader" d="M'+pts.map(p=>p.join(' ')).join(' L')+'"/><circle cx="'+end[0]+'" cy="'+end[1]+'" r="4.5" style="fill:var('+z.color+')"/>';
-      h += '<foreignObject x="'+b[0]+'" y="'+b[1]+'" width="'+b[2]+'" height="'+b[3]+'"><div xmlns="http://www.w3.org/1999/xhtml" class="co '+side+'"><b>'+z.label+'</b><span>'+z.def+(z.ref?'<sup>'+z.ref+'</sup>':'')+'</span></div></foreignObject>';
+      h += '<path class="leader" d="M'+pts.map(p=>p.join(' ')).join(' L')+'"/><circle class="leader-dot" cx="'+end[0]+'" cy="'+end[1]+'" r="4.5" style="fill:var('+z.color+')"/>';
+      h += '<foreignObject class="co-fo" x="'+b[0]+'" y="'+b[1]+'" width="'+b[2]+'" height="'+b[3]+'"><div xmlns="http://www.w3.org/1999/xhtml" class="co '+side+'"><b>'+z.label+'</b><span>'+z.def+(z.ref?'<sup>'+z.ref+'</sup>':'')+'</span></div></foreignObject>';
     });
     const head = 'M'+(C1[0]-8)+' '+(C1[1]+14)+' v-7 c-8 -3 -8 -18 4 -20 c10 -2 16 6 14 13 l2 4 l-3 1 v4 h-4 v5';
     h += '<circle class="halo" cx="'+C1[0]+'" cy="'+C1[1]+'" r="'+HUBR+'"/><circle class="hub" cx="'+C1[0]+'" cy="'+C1[1]+'" r="44"/><path class="icon" d="'+head+'"/>';
@@ -1040,7 +1095,7 @@ window.__VPC_START__ = function(){
     });
   });
   stage.addEventListener('dblclick', e=>{
-    if (readOnly || e.target.closest('.note')) return;
+    if (readOnly || e.target.closest('.note, .cbox')) return;
     const p = toVB(e.clientX,e.clientY), z = zoneAt(p); if (z) addNote(z,p,color,true);
   });
   stage.addEventListener('pointerdown', e=>{ if (!e.target.closest('.note')) select(null); });
@@ -1068,6 +1123,8 @@ window.__VPC_START__ = function(){
   ['wheel','touchstart'].forEach(ev=>addEventListener(ev, ()=>{ glideRun++; }, {passive:true}));
   const glideCenter = (el, then)=>{ const r = el.getBoundingClientRect(); glideTo(scrollY + r.top + r.height/2 - innerHeight/2, then); };
   function focusCard(id, edit){
+    const cb = mode === 'texte' && document.getElementById('cb-t-'+id);
+    if (cb){ cb.closest('.cbox').classList.remove('flash'); if (edit && !readOnly) cb.focus({preventScroll:true}); else cb.closest('.cbox').scrollIntoView({block:'nearest', behavior:'smooth'}); return; }
     const li = document.getElementById('en-'+id); if (!li) return;
     glideCenter(li, ()=>{ if (edit && !readOnly) li.querySelector('.et').focus({preventScroll:true}); });
     li.classList.remove('flash'); void li.offsetWidth; li.classList.add('flash');
@@ -1081,6 +1138,73 @@ window.__VPC_START__ = function(){
     glideCenter(el);
     select(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
   }
+
+  // ---------- Affichage Texte : chaque pastille reliée à une boîte, modifiable sur place ----------
+  let mode = 'bulles';
+  try { if (localStorage.getItem('vpc-mode') === 'texte') mode = 'texte'; } catch(e){}
+  const LEFT = {gains:1, obstacles:1, produits:1}, BW = 228;
+  const coLines = document.getElementById('co-lines'), coBox = document.getElementById('callouts');
+  const coSubst = document.createElement('div'); coSubst.className = 'cb-subst';
+  stage.after(coSubst);
+  function setMode(m){
+    mode = m; stage.classList.toggle('textmode', m === 'texte');
+    document.querySelectorAll('.seg [data-mode]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+    try { localStorage.setItem('vpc-mode', m); } catch(e){}
+    renderCallouts();
+  }
+  document.querySelectorAll('.seg [data-mode]').forEach(b=>{ b.setAttribute('aria-pressed', String(b.dataset.mode === mode)); b.addEventListener('click', ()=>setMode(b.dataset.mode)); });
+  stage.classList.toggle('textmode', mode === 'texte');
+  function calloutBox(n){
+    const L = lab(n), cs = colorStyle(n.c), d = document.createElement('div');
+    d.className = 'cbox'; d.dataset.id = n.id;
+    d.innerHTML = '<button type="button" class="chipn '+cs.cls+'" style="'+cs.style+'" aria-label="Pastille '+L+' : la montrer sur le schéma">'+L+'</button>'+
+      '<div class="cb-body"><input id="cb-t-'+n.id+'" aria-label="Titre de la pastille '+L+'" placeholder="Titre" value="'+esc(n.t)+'"'+(readOnly?' readonly':'')+'>'+
+      '<textarea id="cb-d-'+n.id+'" rows="1" aria-label="Détails de la pastille '+L+'" placeholder="Détails…"'+(readOnly?' readonly':'')+'>'+esc(n.d)+'</textarea></div>';
+    const t = d.querySelector('input'), ta = d.querySelector('textarea'), sync = ()=>{
+      const et = document.getElementById('et-'+n.id), ed = document.getElementById('ed-'+n.id);
+      if (et) et.value = n.t; if (ed){ ed.value = n.d; grow(ed); }
+      const el = layer.querySelector('[data-id="'+n.id+'"]'); if (el) el.title = L+'. '+(n.t||'Sans titre')+(n.d ? '\n'+n.d : '');
+      save(); layoutCallouts();
+    };
+    d.querySelector('.chipn').addEventListener('click', ()=>focusNote(n.id));
+    t.addEventListener('input', ()=>{ n.t = t.value; sync(); });
+    ta.addEventListener('input', ()=>{ n.d = ta.value; grow(ta); sync(); });
+    return d;
+  }
+  function renderCallouts(){
+    if (mode !== 'texte'){ coBox.innerHTML = ''; coLines.innerHTML = ''; coSubst.innerHTML = ''; return; }
+    const a = document.activeElement, keep = a && a.closest && a.closest('.cbox') ? [a.id, a.selectionStart, a.selectionEnd] : null;
+    coBox.innerHTML = ''; coSubst.innerHTML = '';
+    state.notes.slice().sort((a,b)=>a.n-b.n).forEach(n=>{ (n.z === 'substituts' ? coSubst : coBox).appendChild(calloutBox(n)); });
+    document.querySelectorAll('.cbox textarea').forEach(grow);
+    layoutCallouts();
+    if (keep){ const el = document.getElementById(keep[0]); if (el){ el.focus({preventScroll:true}); try { el.setSelectionRange(keep[1], keep[2]); } catch(e){} } }
+  }
+  // Les boîtes se rangent dans les marges, à hauteur de leur pastille, sans se chevaucher.
+  function layoutCallouts(){
+    if (mode !== 'texte') return;
+    const k = W / (stage.getBoundingClientRect().width || 1), GAP = 12, lines = [];
+    [[-10, 800], [870, 1590]].forEach(([y0, y1])=>{
+      ['l','r'].forEach(side=>{
+        const pos = state.notes.filter(n=>n.z !== 'substituts' && n.y >= y0 && n.y < y1 && (side === 'l') === !!LEFT[n.z]).sort((a,b)=>a.y-b.y)
+          .map(n=>{ const el = coBox.querySelector('[data-id="'+n.id+'"]'); return {n, el, h: el ? el.offsetHeight * k : 60}; }).filter(p=>p.el);
+        pos.forEach(p=>{ p.y = p.n.y - p.h/2; });
+        for (let i = 1; i < pos.length; i++) pos[i].y = Math.max(pos[i].y, pos[i-1].y + pos[i-1].h + GAP);
+        const over = pos.length ? pos[pos.length-1].y + pos[pos.length-1].h - (y1 - 20) : 0;
+        if (over > 0) pos.forEach(p=>{ p.y -= over; });
+        for (let i = pos.length - 2; i >= 0; i--) pos[i].y = Math.min(pos[i].y, pos[i+1].y - pos[i].h - GAP);
+        if (pos.length && pos[0].y < y0 + 40){ const dd = y0 + 40 - pos[0].y; pos.forEach(p=>{ p.y += dd; }); }
+        pos.forEach(p=>{
+          const bx = side === 'l' ? 12 : W - 12 - BW, ex = side === 'l' ? bx + BW + 2 : bx - 2, cy = p.y + p.h/2;
+          const sx = p.n.x + (side === 'l' ? -R - 4 : R + 4), mid = (sx + ex) / 2;
+          p.el.style.left = (bx/W*100)+'%'; p.el.style.top = ((p.y+TOP)/VH*100)+'%';
+          lines.push('<path class="cline" d="M'+sx.toFixed(1)+' '+p.n.y.toFixed(1)+' C'+mid.toFixed(1)+' '+p.n.y.toFixed(1)+' '+mid.toFixed(1)+' '+cy.toFixed(1)+' '+ex+' '+cy.toFixed(1)+'"/><circle class="cdot" cx="'+sx.toFixed(1)+'" cy="'+p.n.y.toFixed(1)+'" r="3.2"/>');
+        });
+      });
+    });
+    coLines.innerHTML = lines.join('');
+  }
+  addEventListener('resize', ()=>layoutCallouts());
 
   function renderNotes(){
     layer.innerHTML = '';
@@ -1111,7 +1235,7 @@ window.__VPC_START__ = function(){
           moved = true; el.classList.add('dragging');
           const zHere = zoneAt([x,y]); if (zHere) n.z = zHere;
           const q = project(n.z, [ox+x-sx, oy+y-sy], R); n.x=q[0]; n.y=q[1];
-          el.style.left=(n.x/W*100)+'%'; el.style.top=((n.y+TOP)/VH*100)+'%'; highlight(n.z);
+          el.style.left=(n.x/W*100)+'%'; el.style.top=((n.y+TOP)/VH*100)+'%'; highlight(n.z); layoutCallouts();
         };
         const up = ()=>{ el.removeEventListener('pointermove',move); el.removeEventListener('pointerup',up); el.removeEventListener('pointercancel',up);
           el.classList.remove('dragging'); highlight(null);
@@ -1121,6 +1245,7 @@ window.__VPC_START__ = function(){
       });
       layer.appendChild(el);
     });
+    renderCallouts();
   }
 
   const grow = ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
@@ -1639,7 +1764,7 @@ window.__VPC_START__ = function(){
         sections: [
           ['01 / Portée', 'Cette application.', ['Cette politique concerne l’application « Canevas de proposition de valeur ». Le responsable du traitement est NOM DE L’ÉDITEUR. Contact : '+mail+'.']],
           ['02 / Chiffrement', 'Ce que personne d’autre que vous ne peut lire.', ['Vos canevas, leurs titres, les adresses avec lesquelles vous les partagez et une copie de votre propre adresse sont chiffrés dans votre navigateur avant d’être envoyés, avec une clé issue de votre mot de passe. Le serveur ne stocke que ce texte chiffré : l’éditeur du site ne peut pas le lire.', 'Votre mot de passe ne quitte jamais votre navigateur. Le serveur reçoit seulement une clé de connexion qui en est dérivée, et n’en garde qu’un hachage.']],
-          ['03 / Serveur', 'Ce que le serveur conserve.', ['Pour chaque compte : une empreinte de l’adresse e-mail (qui permet de la reconnaître sans pouvoir la relire), votre clé publique, vos clés chiffrées, le hachage de la clé de connexion, un compteur d’essais de connexion ratés et la date de création du compte.', 'Pour chaque canevas : son contenu chiffré, ses dates de création et de modification, le nombre de personnes avec qui il est partagé et leurs droits (lecture ou modification).', 'Pour l’envoi des codes : l’empreinte de l’adresse, le code haché, l’heure d’envoi et une empreinte de votre adresse IP, effacés après 24 heures dès la visite suivante sur le site.']],
+          ['03 / Serveur', 'Ce que le serveur conserve.', ['Pour chaque compte : une empreinte de l’adresse e-mail (qui permet de la reconnaître sans pouvoir la relire), votre clé publique, vos clés chiffrées, le hachage de la clé de connexion, un compteur d’essais de connexion ratés et la date de création du compte.', 'Pour chaque canevas : son contenu chiffré, ses dates de création et de modification, le nombre de personnes avec qui il est partagé et leurs droits (lecture ou modification).', 'Pour chaque canevas partagé : l’heure à laquelle chaque participant l’a ouvert pour la dernière fois, et son nom d’affichage chiffré avec la clé du canevas, que seuls les participants peuvent lire. Ces lignes disparaissent quand la personne est retirée du canevas ou que le canevas est supprimé.', 'Pour l’envoi des codes : l’empreinte de l’adresse, le code haché, l’heure d’envoi et une empreinte de votre adresse IP, effacés après 24 heures dès la visite suivante sur le site.']],
           ['04 / E-mails', 'Codes et invitations.', ['Votre adresse e-mail passe en clair par le serveur au moment d’envoyer un code ou une invitation, puis elle est oubliée. Ces e-mails partent d’une boîte de messagerie hébergée par OVHcloud. Les éventuels avis de non-distribution reçus par cette boîte peuvent contenir l’adresse concernée.']],
           ['05 / Cookies et stockage', 'Strictement nécessaires.', ['Un seul cookie, « vpc_session », sert à vous garder connecté pendant 7 jours. Il n’est lisible que par le serveur et ne circule qu’en HTTPS.', 'Votre navigateur garde aussi, sur votre appareil uniquement : vos clés déverrouillées et votre adresse jusqu’à la déconnexion, votre adresse pendant l’inscription (effacée à la fermeture de l’onglet) et votre choix de langue.', 'OVHcloud indique que son hébergement mutualisé peut déposer un cookie technique « SERVER ID » pour répartir les requêtes entre serveurs. Sa durée est inférieure à 24 heures. Ce cookie ne sert pas à la publicité ou au profilage par Quorelix.']],
           ['06 / Suivi', 'Aucun suivi ajouté.', ['Le code de l’application n’intègre ni outil d’analyse d’audience, ni publicité, ni pixel de suivi, et ne charge aucun service tiers.', 'L’hébergement peut produire des journaux techniques (adresse IP, page demandée, heure, navigateur) pour son fonctionnement et sa sécurité. OVHcloud indique que « OVHcloud Web Statistics » est activé par défaut sur l’hébergement mutualisé ; sa désactivation doit être confirmée dans le compte OVHcloud.']],
@@ -1692,7 +1817,7 @@ window.__VPC_START__ = function(){
         sections: [
           ['01 / Scope', 'This application.', ['This policy covers the “Value Proposition Canvas” application. The data controller is NOM DE L’ÉDITEUR. Contact: '+mail+'.']],
           ['02 / Encryption', 'What no one but you can read.', ['Your canvases, their titles, the addresses you share them with, and a copy of your own address are encrypted in your browser before being sent, with a key derived from your password. The server stores only this encrypted text: the site publisher cannot read it.', 'Your password never leaves your browser. The server only receives a login key derived from it, and keeps only a hash of that key.']],
-          ['03 / Server', 'What the server keeps.', ['For each account: a fingerprint of the email address (which recognizes it without being able to read it back), your public key, your encrypted keys, the hash of the login key, a failed-login counter, and the account creation date.', 'For each canvas: its encrypted content, its creation and modification dates, the number of people it is shared with, and their rights (read or edit).', 'For sending codes: the address fingerprint, the hashed code, the time sent, and a fingerprint of your IP address, deleted after 24 hours at the next visit to the site.']],
+          ['03 / Server', 'What the server keeps.', ['For each account: a fingerprint of the email address (which recognizes it without being able to read it back), your public key, your encrypted keys, the hash of the login key, a failed-login counter, and the account creation date.', 'For each canvas: its encrypted content, its creation and modification dates, the number of people it is shared with, and their rights (read or edit).', 'For each shared canvas: the last time each participant had it open, and their display name encrypted with the canvas key, which only participants can read. These rows are removed when the person is removed from the canvas or the canvas is deleted.', 'For sending codes: the address fingerprint, the hashed code, the time sent, and a fingerprint of your IP address, deleted after 24 hours at the next visit to the site.']],
           ['04 / Email', 'Codes and invitations.', ['Your email address passes through the server in clear text when a code or invitation is sent, and is then forgotten. These emails are sent from a mailbox hosted by OVHcloud. Any non-delivery notices received by that mailbox may contain the address concerned.']],
           ['05 / Cookies and storage', 'Strictly necessary.', ['A single cookie, “vpc_session”, keeps you signed in for 7 days. Only the server can read it, and it is only sent over HTTPS.', 'Your browser also keeps, on your device only: your unlocked keys and your address until you sign out, your address during sign-up (cleared when the tab closes), and your language choice.', 'OVHcloud states that its shared hosting may set a technical “SERVER ID” cookie to route requests between servers. It lasts less than 24 hours. Quorelix does not use it for advertising or profiling.']],
           ['06 / Tracking', 'No tracking added.', ['The application code includes no audience analytics, advertising, or tracking pixel, and loads no third-party service.', 'The hosting may generate technical logs (IP address, requested page, time, browser) for its operation and security. OVHcloud states that “OVHcloud Web Statistics” is enabled by default on shared hosting; disabling it must be confirmed in the OVHcloud account.']],
@@ -1909,6 +2034,7 @@ window.__VPC_START__ = function(){
     const queue = fn=>(busy = busy.then(fn, fn));
     const live = liveSync({id, rev: c.rev, shared: c.role !== 'owner' || (c.shares||[]).length > 0, myName,
       getRev: ()=>rev, keyNow: ()=>ck, queue, onUpdate: ()=>queue(()=>sync(false))});
+    if (live.shared) presenceBar({id, myName, owner: meta.owner, keyNow: ()=>ck});
     window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); live.active(); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 800); };
     window.addEventListener('pagehide', ()=>flush(true));
     document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flush(true); });
@@ -1995,11 +2121,56 @@ window.__VPC_START__ = function(){
     document.addEventListener('visibilitychange', ()=>{ if (!document.hidden){ delay = 2000; clearTimeout(t); t = setTimeout(tick, 0); o.shared && o.queue(poll); } });
     tick();
     return {
+      shared: o.shared,
       active(){ if (delay > 2000){ delay = 2000; tick(); } },
       seen(r){ if (r >= shown){ shown = r; if (!go.hidden && el.classList.contains('on')) hide(); } },
       say(m, ms){ clearTimeout(hideT); txt.textContent = m; go.hidden = true; open(); hideT = setTimeout(hide, ms); },
       hide
     };
+  }
+
+  // ---------- Présence : qui est sur le canevas ----------
+  // Toutes les 20 secondes (onglet visible), chacun signale qu'il est là, avec son nom chiffré par la clé du canevas.
+  function presenceBar(o){
+    const ONLINE = 45, GRADS = [['#FF9F8E','#FF7E79'],['#64B5FF','#007AFF'],['#C3A6FF','#8E6CF0'],['#6FDB8B','#34A853'],['#FFD36B','#FF9500'],['#7FE0E0','#30B0C7'],['#FF9FC5','#FF2D55']];
+    const grad = n=>{ let h = 0; for (const ch of n) h = (h*31 + ch.charCodeAt(0)) >>> 0; const g = GRADS[h % GRADS.length]; return 'linear-gradient(180deg,'+g[0]+','+g[1]+')'; };
+    const first = n=>String(n).split(/[\s@.]/)[0] || n;
+    const ago = s=>s < ONLINE ? 'En ligne' : s < 3600 ? 'Vu il y a '+Math.max(1, Math.round(s/60))+' min' : s < 86400 ? 'Vu il y a '+Math.round(s/3600)+' h' : 'Vu il y a '+Math.round(s/86400)+' j';
+    const ROLE = {owner:'A créé le canevas', edit:'Peut modifier', view:'Lecture seule'};
+    const bar = document.createElement('div'); bar.className = 'presence'; bar.hidden = true;
+    bar.innerHTML = '<button type="button" class="pres-stack" aria-haspopup="true" aria-expanded="false" aria-label="Personnes sur ce canevas"></button><span class="pres-txt"></span><div class="pres-pop" hidden></div>';
+    document.querySelector('#view-editor .doc-title').after(bar);
+    const stack = bar.querySelector('.pres-stack'), txt = bar.querySelector('.pres-txt'), pop = bar.querySelector('.pres-pop');
+    const av = (p, cls)=>'<span class="av'+(p.on?'':' off')+(cls||'')+'" style="background:'+grad(p.name)+'">'+esc(first(p.name).charAt(0).toUpperCase())+'<i></i></span>';
+    const list = (names)=>names.length < 2 ? names.join('') : names.length === 2 ? names.join(' et ') : names.slice(0,2).join(', ')+' et '+(names.length-2)+(names.length > 3 ? ' autres' : ' autre');
+    async function beat(away){
+      if (document.hidden && !away) return;
+      let r;
+      try { r = await api('here',{body:{id: o.id, away: !!away, name_ct: await K.encJSON(o.keyNow().key, {name: o.myName})}, keepalive: !!away}); } catch(e){ return; }
+      if (away) return;
+      const people = [];
+      for (const p of r.people){ try { people.push({name: (await K.decJSON(o.keyNow().key, p.name_ct)).name || '', role: p.role, me: p.me, ago: p.ago, on: p.ago < ONLINE}); } catch(e){} }
+      draw(people);
+    }
+    function draw(people){
+      const owner = people.find(p=>p.role === 'owner');
+      people.sort((a, b)=>(b.role === 'owner') - (a.role === 'owner') || b.me - a.me || b.on - a.on || a.ago - b.ago);
+      bar.hidden = people.length < 2 && !people.some(p=>!p.me);
+      stack.innerHTML = people.slice(0, 6).map(p=>av(p, p.me ? ' me' : '')).join('') + (people.length > 6 ? '<span class="av more">+'+(people.length-6)+'</span>' : '');
+      const here = people.filter(p=>p.on && !p.me).map(p=>first(p.name)), away = people.filter(p=>!p.on && !p.me).map(p=>first(p.name));
+      const parts = ['Créé par <b>'+esc(owner ? (owner.me ? 'vous' : owner.name) : o.owner)+'</b>'];
+      parts.push(here.length ? '<b>'+esc(list(here)).replace(/ et /g,'</b> et <b>')+'</b> '+(here.length > 1 ? 'sont' : 'est')+' sur le canevas' : 'Personne d’autre sur le canevas pour l’instant');
+      if (away.length) parts.push(esc(list(away))+' hors ligne');
+      txt.innerHTML = parts.join(' · ');
+      pop.innerHTML = '<h4>Sur ce canevas</h4>'+people.map(p=>'<div class="pres-row">'+av(p)+'<div><b>'+esc(p.name)+(p.me ? ' (vous)' : '')+'</b><small>'+ROLE[p.role]+'</small></div><span class="st'+(p.on?' on':'')+'">'+ago(p.ago)+'</span></div>').join('');
+    }
+    const setPop = open=>{ pop.hidden = !open; stack.setAttribute('aria-expanded', String(open)); };
+    stack.addEventListener('click', e=>{ e.stopPropagation(); setPop(pop.hidden); });
+    document.addEventListener('click', e=>{ if (!pop.hidden && !pop.contains(e.target)) setPop(false); });
+    document.addEventListener('keydown', e=>{ if (e.key === 'Escape' && !pop.hidden){ setPop(false); stack.focus(); } });
+    document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) beat(); });
+    window.addEventListener('pagehide', ()=>beat(true));
+    beat(); setInterval(beat, 20000);
   }
 
   // ---------- Adresses en bulles, comme dans Mail ----------

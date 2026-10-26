@@ -86,6 +86,8 @@ function sqlite_schema(PDO $pdo): void
         CREATE TABLE IF NOT EXISTS vpc_shares (canvas_id TEXT NOT NULL, email_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'view',
             label_ct TEXT NOT NULL, wrap TEXT, created_at TEXT NOT NULL, PRIMARY KEY (canvas_id, email_hash));
         CREATE INDEX IF NOT EXISTS idx_share_email ON vpc_shares (email_hash);
+        CREATE TABLE IF NOT EXISTS vpc_presence (canvas_id TEXT NOT NULL, email_hash TEXT NOT NULL, name_ct TEXT NOT NULL,
+            seen_at TEXT NOT NULL, PRIMARY KEY (canvas_id, email_hash));
     ");
 }
 
@@ -544,8 +546,10 @@ try {
             require_fresh();
             db()->beginTransaction();
             db()->prepare('DELETE FROM vpc_shares WHERE canvas_id IN (SELECT id FROM vpc_canvases WHERE owner_id = ?)')->execute([$u['id']]);
+            db()->prepare('DELETE FROM vpc_presence WHERE canvas_id IN (SELECT id FROM vpc_canvases WHERE owner_id = ?)')->execute([$u['id']]);
             db()->prepare('DELETE FROM vpc_canvases WHERE owner_id = ?')->execute([$u['id']]);
             db()->prepare('DELETE FROM vpc_shares WHERE email_hash = ?')->execute([$u['email_hash']]);
+            db()->prepare('DELETE FROM vpc_presence WHERE email_hash = ?')->execute([$u['email_hash']]);
             db()->prepare('DELETE FROM vpc_codes WHERE email_hash = ?')->execute([$u['email_hash']]);
             db()->prepare('DELETE FROM vpc_users WHERE id = ?')->execute([$u['id']]);
             db()->commit();
@@ -609,6 +613,46 @@ try {
             }
             out(200, $res);
 
+        // Présence sur un canevas partagé : chaque personne qui l'a ouvert signale qu'elle est là, avec son nom
+        // chiffré par la clé du canevas (le serveur ne peut pas le lire). « away » la signale partie.
+        case 'here':
+            $u = current_user();
+            $id = (string) (input()['id'] ?? '');
+            $row = canvas_access($id, $u);
+            if (!$row) {
+                fail(404, 'introuvable');
+            }
+            $name = str_in('name_ct', 2000);
+            $seen = !empty(input()['away']) ? now(-3600) : now();
+            $st = db()->prepare('UPDATE vpc_presence SET name_ct = ?, seen_at = ? WHERE canvas_id = ? AND email_hash = ?');
+            $st->execute([$name, $seen, $id, $u['email_hash']]);
+            // (MySQL compte 0 ligne modifiée quand rien ne change : on vérifie que la ligne manque vraiment.)
+            $has = db()->prepare('SELECT 1 FROM vpc_presence WHERE canvas_id = ? AND email_hash = ?');
+            $has->execute([$id, $u['email_hash']]);
+            if ($st->rowCount() === 0 && !$has->fetchColumn()) {
+                db()->prepare('INSERT INTO vpc_presence (canvas_id, email_hash, name_ct, seen_at) VALUES (?, ?, ?, ?)')->execute([$id, $u['email_hash'], $name, $seen]);
+            }
+            // Seules les personnes qui ont encore accès au canevas sont renvoyées.
+            $st = db()->prepare('SELECT p.email_hash, p.name_ct, p.seen_at, s.role, u.id AS uid FROM vpc_presence p
+                LEFT JOIN vpc_shares s ON s.canvas_id = p.canvas_id AND s.email_hash = p.email_hash
+                LEFT JOIN vpc_users u ON u.email_hash = p.email_hash
+                WHERE p.canvas_id = ?');
+            $st->execute([$id]);
+            $people = [];
+            foreach ($st->fetchAll() as $p) {
+                $owner = (int) $p['uid'] === (int) $row['owner_id'];
+                if (!$owner && $p['role'] === null) {
+                    continue;
+                }
+                $people[] = [
+                    'name_ct' => $p['name_ct'],
+                    'role' => $owner ? 'owner' : $p['role'],
+                    'me' => hash_equals($u['email_hash'], $p['email_hash']),
+                    'ago' => max(0, time() - (int) strtotime($p['seen_at'] . ' UTC')),
+                ];
+            }
+            out(200, ['people' => $people]);
+
         case 'create':
             $u = current_user();
             require_keys($u);
@@ -659,6 +703,7 @@ try {
             }
             if ($remove !== '') {
                 db()->prepare('DELETE FROM vpc_shares WHERE canvas_id = ? AND email_hash = ?')->execute([$row['id'], $remove]);
+                db()->prepare('DELETE FROM vpc_presence WHERE canvas_id = ? AND email_hash = ?')->execute([$row['id'], $remove]);
             }
             $up = db()->prepare('UPDATE vpc_shares SET wrap = ?, label_ct = ? WHERE canvas_id = ? AND email_hash = ?');
             foreach ($wraps as $h => $w) {
@@ -676,6 +721,7 @@ try {
             $st->execute([$id, $u['id']]);
             if ($st->rowCount() === 1) {
                 db()->prepare('DELETE FROM vpc_shares WHERE canvas_id = ?')->execute([$id]);
+                db()->prepare('DELETE FROM vpc_presence WHERE canvas_id = ?')->execute([$id]);
             }
             out(200, ['deleted' => $st->rowCount()]);
 

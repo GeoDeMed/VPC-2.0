@@ -64,6 +64,8 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
   - Avec la clé de secours, tout est conservé.
   - Sans elle, le compte repart vide : les canevas de la personne sont perdus, personne ne peut les déchiffrer.
 - **Collaboration en direct :** quand un canevas est partagé et ouvert, l'application vérifie discrètement s'il a changé (toutes les 2 secondes après une activité, puis jusqu'à toutes les 15 secondes au calme, et jamais dans un onglet masqué). Une bulle bleue annonce « … a modifié le canevas » ; la flèche ↻ met le canevas à jour sur place, les pastilles glissant vers leur nouvelle place. Si deux personnes enregistrent en même temps, les modifications sont fusionnées pastille par pastille ; sur un même élément modifié des deux côtés, la version de la personne qui enregistre est gardée et elle en est prévenue.
+- **Qui est là :** sur un canevas partagé, des pastilles à initiales s'affichent sous le titre, avec un point vert pour les personnes qui l'ont ouvert en ce moment. Un clic dessus ouvre la liste : nom, droit, « En ligne » ou « Vu il y a … ». Le nom vient de « Mon compte » (à défaut, l'adresse e-mail) et il est chiffré avec la clé du canevas.
+- **Bulles / Texte :** au-dessus du schéma, le sélecteur « Texte » relie chaque pastille par un fin trait à une boîte arrondie qui affiche son titre et ses détails, modifiables directement dans la boîte. Le choix est mémorisé dans le navigateur. Sur téléphone, le schéma défile alors de côté.
 
 ## Pied de page et pages légales
 
@@ -98,3 +100,5 @@ Les données sont dans `DOSSIER-DES-DONNEES/canevas.sqlite`, et la clé des empr
 ## Si vous préférez MySQL
 
 Créez une base dans l'espace client OVH, exécutez `schema.sql` dans phpMyAdmin, puis remplacez les trois lignes `DB_` de `config.php` par celles en commentaire.
+
+Déjà installé avec MySQL ? Exécutez de nouveau `schema.sql` après une mise à jour : les tables existantes ne sont pas touchées, les nouvelles (comme `vpc_presence`) sont ajoutées.
