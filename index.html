@@ -464,6 +464,18 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 .note.leave{pointer-events:none;animation:note-leave .45s ease both}
 @keyframes note-arrive{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes note-leave{to{opacity:0;transform:translate(-50%,-50%) scale(.3)}}
+/* Nom du canevas : titre modifiable, création et renommage */
+.doc-title input{font:inherit;color:inherit;letter-spacing:inherit;width:100%;box-sizing:border-box;border:0;border-radius:12px;background:transparent;padding:2px 8px;margin:0 -8px;outline:0;transition:background .2s,box-shadow .2s}
+.doc-title input::placeholder{color:var(--muted);opacity:.6}
+.doc-title input:hover:not([readonly]){background:color-mix(in srgb,var(--ui) 6%,transparent)}
+.doc-title input:focus:not([readonly]){background:var(--page);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 22%,transparent)}
+.name-form{display:grid;gap:6px;margin:0 0 16px}
+.name-form label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.name-row,.clist .name-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.clist .name-form{grid-column:1/-1;margin:0}
+.name-form input{flex:1 1 220px;min-width:0;font:inherit;font-size:17px;color:var(--ink);background:var(--page);border:1px solid var(--rule);border-radius:14px;padding:12px 14px;outline:0}
+.name-form input:focus{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 18%,transparent)}
+.li-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 @media print{.topbar{display:none!important}}
 </style>
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -672,6 +684,10 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
     <div><p class="eyebrow">Mes canevas</p><h1>Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></h1></div>
     <button class="btn primary" id="b-new" type="button">Nouveau canevas</button>
   </div>
+  <form class="name-form new-form" id="new-form" hidden>
+    <label for="new-name">Nom du nouveau canevas</label>
+    <div class="name-row"><input id="new-name" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Par exemple : Offre vélos cargo"><button class="btn primary" type="submit">Créer</button><button class="btn ghostb" id="new-cancel" type="button">Annuler</button></div>
+  </form>
   <ul class="clist" id="clist"></ul>
   <section class="shared-sec" id="shared-sec" hidden>
     <h2>Partagés avec moi</h2>
@@ -688,8 +704,8 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 
 <div class="wrap" lang="fr" id="view-editor" hidden>
   <header>
-    <p class="eyebrow">Module II · Design Thinking</p>
-    <h1>Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></h1>
+    <p class="eyebrow">Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></p>
+    <h1 class="doc-title"><input id="f-nom" data-meta="nom" placeholder="Nom du canevas" aria-label="Nom du canevas" maxlength="120" autocomplete="off" spellcheck="false"></h1>
     <p class="lede">Commencez par le profil client, en haut.<sup>2</sup> Posez une pastille numérotée par idée, puis rédigez-la dans la vue éclatée, sous le schéma. Votre canevas est enregistré automatiquement.</p>
   </header>
 
@@ -816,7 +832,7 @@ window.__VPC_START__ = function(){
     substituts:'<rect class="g-base" x="3" y="9" width="28" height="16" rx="4"/><rect class="g-on" x="3" y="9" width="28" height="16" rx="4" opacity=".35"/>'
   };
   const PRESETS = ['jaune','vert','bleu','rouge','gris'];
-  const META = ['organisation','debut','fin','produit','client','equipe'];
+  const META = ['nom','organisation','debut','fin','produit','client','equipe'];
   const KEY = 'vpc-canevas-v4';
 
   // ---------- Géométrie du schéma éclaté ----------
@@ -921,7 +937,7 @@ window.__VPC_START__ = function(){
 
   // ---------- État ----------
   const uid = ()=>Math.random().toString(36).slice(2,10);
-  const blank = ()=>({v:4, organisation:'',debut:'',fin:'',produit:'',client:'',equipe:'',notes:[]});
+  const blank = ()=>({v:4, nom:'', organisation:'',debut:'',fin:'',produit:'',client:'',equipe:'',notes:[]});
   const isHex = c=>/^#[0-9a-f]{6}$/i.test(c);
   function normalize(s){
     const b = blank();
@@ -1375,7 +1391,7 @@ window.__VPC_START__ = function(){
   let ME = null; // {uid, pub, mk, priv, email, name}
   async function remember(uid, pub, opened){ ME = Object.assign({uid, pub}, opened); await Vault.put(uid, ME); }
 
-  const titleOf = d=>String((d && (String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
+  const titleOf = d=>String((d && (String(d.nom||'').trim() || String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
   const pwOk = (a, b, msg)=>{ if (a.length < 10){ msg.textContent = 'Le mot de passe doit faire 10 caractères au moins.'; return false; } if (a !== b){ msg.textContent = 'Les deux mots de passe ne sont pas identiques.'; return false; } return true; };
 
   // ---------- Connexion ----------
@@ -1769,8 +1785,9 @@ window.__VPC_START__ = function(){
       let title = 'Canevas illisible';
       try { const o = await openCanvas(c); title = o.meta.title; grantPending(c.id, o.ck, c.shares).catch(()=>{}); } catch(e){}
       const n = c.shares.length;
-      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><button class="btn warn" type="button">Supprimer</button>';
-      twoStep(li.querySelector('button'), 'Supprimer', 'Confirmer la suppression', async ()=>{
+      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><div class="li-actions"><button class="btn ghostb" type="button">Renommer</button><button class="btn warn" type="button">Supprimer</button></div>';
+      li.querySelector('.ghostb').addEventListener('click', ()=>renameInList(li, c, title));
+      twoStep(li.querySelector('.warn'), 'Supprimer', 'Confirmer la suppression', async ()=>{
         try { await api('delete',{body:{id:c.id}}); li.remove(); msg.textContent = 'Canevas supprimé.'; } catch(e){ msg.textContent = 'La suppression a échoué.'; }
       });
       ul.appendChild(li);
@@ -1805,6 +1822,32 @@ window.__VPC_START__ = function(){
       });
       groupOf(title ? owner : '').appendChild(li);
     }
+  }
+
+  // Renommer depuis la liste : le nom est enregistré dans le canevas, chiffré comme le reste.
+  function renameInList(li, c, title){
+    const msg = $('list-msg'), keep = li.innerHTML;
+    li.innerHTML = '<form class="name-form"><input type="text" maxlength="120" autocomplete="off" spellcheck="false" aria-label="Nouveau nom du canevas"><button class="btn primary" type="submit">OK</button><button class="btn ghostb" type="button">Annuler</button></form>';
+    const f = li.querySelector('form'), inp = f.querySelector('input');
+    inp.value = title === 'Sans titre' || title === 'Canevas illisible' ? '' : title; inp.focus(); inp.select();
+    const back = ()=>showList();
+    f.querySelector('.ghostb').onclick = back;
+    inp.addEventListener('keydown', e=>{ if (e.key === 'Escape') back(); });
+    f.onsubmit = async e=>{
+      e.preventDefault();
+      const nom = inp.value.trim(); if (!nom){ inp.focus(); return; }
+      f.querySelectorAll('button,input').forEach(x=>x.disabled = true);
+      try {
+        for (let tries = 0; ; tries++){
+          const g = await api('get',{qs:'id='+encodeURIComponent(c.id)});
+          const ck = await K.canvasKey(await K.unwrap(ME, g.wrap));
+          const meta = await K.decJSON(ck.key, g.meta_ct), data = Object.assign({}, await K.decJSON(ck.key, g.data_ct), {nom});
+          try { await api('save',{body:{id: c.id, rev: g.rev, meta_ct: await K.encJSON(ck.key, Object.assign({}, meta, {title: titleOf(data), by: ME.name || ME.email})), data_ct: await K.encJSON(ck.key, data)}}); break; }
+          catch(err){ if (err.status !== 409 || tries >= 2) throw err; }
+        }
+        msg.textContent = 'Canevas renommé.'; showList();
+      } catch(err){ li.innerHTML = keep; msg.textContent = 'Le renommage a échoué. '+errText(err); showList(); }
+    };
   }
 
   async function createCanvas(data){
@@ -2192,9 +2235,16 @@ window.__VPC_START__ = function(){
   menuBtn.addEventListener('click', e=>{ e.stopPropagation(); setMenu(menu.hidden); if (!menu.hidden) menu.querySelector('a,button').focus(); });
   document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target)) setMenu(false); });
   document.addEventListener('keydown', e=>{ if (e.key==='Escape' && !menu.hidden){ setMenu(false); menuBtn.focus(); } });
-  $('b-new').addEventListener('click', async ()=>{
-    try { await createCanvas({v:4, notes:[]}); }
-    catch(e){ $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
+  // Nouveau canevas : on le nomme d'abord (le nom reste modifiable ensuite).
+  $('b-new').addEventListener('click', ()=>{ $('new-form').hidden = false; $('b-new').hidden = true; $('new-name').focus(); });
+  const closeNew = ()=>{ $('new-form').hidden = true; $('b-new').hidden = false; $('new-name').value = ''; };
+  $('new-cancel').addEventListener('click', closeNew);
+  $('new-name').addEventListener('keydown', e=>{ if (e.key === 'Escape') closeNew(); });
+  $('new-form').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const b = $('new-form').querySelector('button[type=submit]'); b.disabled = true;
+    try { await createCanvas({v:4, nom: $('new-name').value.trim().slice(0,120), notes:[]}); }
+    catch(err){ b.disabled = false; $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
   });
 
   async function boot(){

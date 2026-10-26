@@ -109,7 +109,7 @@
   let ME = null; // {uid, pub, mk, priv, email, name}
   async function remember(uid, pub, opened){ ME = Object.assign({uid, pub}, opened); await Vault.put(uid, ME); }
 
-  const titleOf = d=>String((d && (String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
+  const titleOf = d=>String((d && (String(d.nom||'').trim() || String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
   const pwOk = (a, b, msg)=>{ if (a.length < 10){ msg.textContent = 'Le mot de passe doit faire 10 caractères au moins.'; return false; } if (a !== b){ msg.textContent = 'Les deux mots de passe ne sont pas identiques.'; return false; } return true; };
 
   // ---------- Connexion ----------
@@ -503,8 +503,9 @@
       let title = 'Canevas illisible';
       try { const o = await openCanvas(c); title = o.meta.title; grantPending(c.id, o.ck, c.shares).catch(()=>{}); } catch(e){}
       const n = c.shares.length;
-      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><button class="btn warn" type="button">Supprimer</button>';
-      twoStep(li.querySelector('button'), 'Supprimer', 'Confirmer la suppression', async ()=>{
+      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><div class="li-actions"><button class="btn ghostb" type="button">Renommer</button><button class="btn warn" type="button">Supprimer</button></div>';
+      li.querySelector('.ghostb').addEventListener('click', ()=>renameInList(li, c, title));
+      twoStep(li.querySelector('.warn'), 'Supprimer', 'Confirmer la suppression', async ()=>{
         try { await api('delete',{body:{id:c.id}}); li.remove(); msg.textContent = 'Canevas supprimé.'; } catch(e){ msg.textContent = 'La suppression a échoué.'; }
       });
       ul.appendChild(li);
@@ -539,6 +540,32 @@
       });
       groupOf(title ? owner : '').appendChild(li);
     }
+  }
+
+  // Renommer depuis la liste : le nom est enregistré dans le canevas, chiffré comme le reste.
+  function renameInList(li, c, title){
+    const msg = $('list-msg'), keep = li.innerHTML;
+    li.innerHTML = '<form class="name-form"><input type="text" maxlength="120" autocomplete="off" spellcheck="false" aria-label="Nouveau nom du canevas"><button class="btn primary" type="submit">OK</button><button class="btn ghostb" type="button">Annuler</button></form>';
+    const f = li.querySelector('form'), inp = f.querySelector('input');
+    inp.value = title === 'Sans titre' || title === 'Canevas illisible' ? '' : title; inp.focus(); inp.select();
+    const back = ()=>showList();
+    f.querySelector('.ghostb').onclick = back;
+    inp.addEventListener('keydown', e=>{ if (e.key === 'Escape') back(); });
+    f.onsubmit = async e=>{
+      e.preventDefault();
+      const nom = inp.value.trim(); if (!nom){ inp.focus(); return; }
+      f.querySelectorAll('button,input').forEach(x=>x.disabled = true);
+      try {
+        for (let tries = 0; ; tries++){
+          const g = await api('get',{qs:'id='+encodeURIComponent(c.id)});
+          const ck = await K.canvasKey(await K.unwrap(ME, g.wrap));
+          const meta = await K.decJSON(ck.key, g.meta_ct), data = Object.assign({}, await K.decJSON(ck.key, g.data_ct), {nom});
+          try { await api('save',{body:{id: c.id, rev: g.rev, meta_ct: await K.encJSON(ck.key, Object.assign({}, meta, {title: titleOf(data), by: ME.name || ME.email})), data_ct: await K.encJSON(ck.key, data)}}); break; }
+          catch(err){ if (err.status !== 409 || tries >= 2) throw err; }
+        }
+        msg.textContent = 'Canevas renommé.'; showList();
+      } catch(err){ li.innerHTML = keep; msg.textContent = 'Le renommage a échoué. '+errText(err); showList(); }
+    };
   }
 
   async function createCanvas(data){
@@ -926,9 +953,16 @@
   menuBtn.addEventListener('click', e=>{ e.stopPropagation(); setMenu(menu.hidden); if (!menu.hidden) menu.querySelector('a,button').focus(); });
   document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target)) setMenu(false); });
   document.addEventListener('keydown', e=>{ if (e.key==='Escape' && !menu.hidden){ setMenu(false); menuBtn.focus(); } });
-  $('b-new').addEventListener('click', async ()=>{
-    try { await createCanvas({v:4, notes:[]}); }
-    catch(e){ $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
+  // Nouveau canevas : on le nomme d'abord (le nom reste modifiable ensuite).
+  $('b-new').addEventListener('click', ()=>{ $('new-form').hidden = false; $('b-new').hidden = true; $('new-name').focus(); });
+  const closeNew = ()=>{ $('new-form').hidden = true; $('b-new').hidden = false; $('new-name').value = ''; };
+  $('new-cancel').addEventListener('click', closeNew);
+  $('new-name').addEventListener('keydown', e=>{ if (e.key === 'Escape') closeNew(); });
+  $('new-form').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const b = $('new-form').querySelector('button[type=submit]'); b.disabled = true;
+    try { await createCanvas({v:4, nom: $('new-name').value.trim().slice(0,120), notes:[]}); }
+    catch(err){ b.disabled = false; $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
   });
 
   async function boot(){

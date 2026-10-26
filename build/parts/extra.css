@@ -197,3 +197,15 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 .note.leave{pointer-events:none;animation:note-leave .45s ease both}
 @keyframes note-arrive{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes note-leave{to{opacity:0;transform:translate(-50%,-50%) scale(.3)}}
+/* Nom du canevas : titre modifiable, création et renommage */
+.doc-title input{font:inherit;color:inherit;letter-spacing:inherit;width:100%;box-sizing:border-box;border:0;border-radius:12px;background:transparent;padding:2px 8px;margin:0 -8px;outline:0;transition:background .2s,box-shadow .2s}
+.doc-title input::placeholder{color:var(--muted);opacity:.6}
+.doc-title input:hover:not([readonly]){background:color-mix(in srgb,var(--ui) 6%,transparent)}
+.doc-title input:focus:not([readonly]){background:var(--page);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 22%,transparent)}
+.name-form{display:grid;gap:6px;margin:0 0 16px}
+.name-form label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.name-row,.clist .name-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.clist .name-form{grid-column:1/-1;margin:0}
+.name-form input{flex:1 1 220px;min-width:0;font:inherit;font-size:17px;color:var(--ink);background:var(--page);border:1px solid var(--rule);border-radius:14px;padding:12px 14px;outline:0}
+.name-form input:focus{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 18%,transparent)}
+.li-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}

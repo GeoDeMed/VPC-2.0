@@ -50,7 +50,7 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
 
 ## Utilisation
 
-- **Nouveau canevas** depuis « Mes canevas ».
+- **Nouveau canevas** depuis « Mes canevas » : donnez-lui un nom, puis « Créer ». Le nom se change à tout moment, dans le titre du canevas ouvert ou avec « Renommer » dans la liste.
 - **Collaborer**, dans le menu :
   - Choisissez le canevas, tapez les adresses : chaque adresse complète devient une bulle bleue (validée par Entrée, une virgule ou un espace ; un collage de plusieurs adresses, même au format « Nom <adresse> », est découpé tout seul). Touchez une bulle puis Effacer, ou son ×, pour la retirer. Choisissez « Lecture seule » ou « Peut modifier », puis « Inviter ». Chaque personne reçoit un e-mail avec le lien.
   - « Vos collaborateurs » liste toutes les personnes invitées, sur tous vos canevas, avec leur statut (« Invitation envoyée », « En attente » ou « Accès actif ») et leur droit, modifiable. Seul le créateur d'un canevas peut inviter ou retirer quelqu'un.

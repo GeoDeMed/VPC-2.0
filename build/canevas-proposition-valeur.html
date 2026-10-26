@@ -352,7 +352,7 @@ footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border
     substituts:'<rect class="g-base" x="3" y="9" width="28" height="16" rx="4"/><rect class="g-on" x="3" y="9" width="28" height="16" rx="4" opacity=".35"/>'
   };
   const PRESETS = ['jaune','vert','bleu','rouge','gris'];
-  const META = ['organisation','debut','fin','produit','client','equipe'];
+  const META = ['nom','organisation','debut','fin','produit','client','equipe'];
   const KEY = 'vpc-canevas-v4';
 
   // ---------- Géométrie du schéma éclaté ----------
@@ -457,7 +457,7 @@ footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border
 
   // ---------- État ----------
   const uid = ()=>Math.random().toString(36).slice(2,10);
-  const blank = ()=>({v:4, organisation:'',debut:'',fin:'',produit:'',client:'',equipe:'',notes:[]});
+  const blank = ()=>({v:4, nom:'', organisation:'',debut:'',fin:'',produit:'',client:'',equipe:'',notes:[]});
   const isHex = c=>/^#[0-9a-f]{6}$/i.test(c);
   function normalize(s){
     const b = blank();
