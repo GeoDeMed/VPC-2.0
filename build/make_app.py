@@ -47,6 +47,10 @@ rep('<title>Canevas de proposition de valeur</title>', '<title>Canevas de propos
 rep('      <button class="btn ghostb hosted-only" id="b-share" type="button">Copier le lien de partage</button>\n', '')
 rep('<button class="btn primary" id="b-fork" type="button">Modifier une copie</button>',
     '<button class="btn primary" id="b-fork" type="button">Dupliquer dans mes canevas</button>')
+# Nom du canevas : modifiable directement dans le titre de la page.
+rep('    <p class="eyebrow">Module II · Design Thinking</p>\n    <h1>Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></h1>',
+    '    <p class="eyebrow">Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></p>\n'
+    '    <h1 class="doc-title"><input id="f-nom" data-meta="nom" placeholder="Nom du canevas" aria-label="Nom du canevas" maxlength="120" autocomplete="off" spellcheck="false"></h1>')
 rep('<p class="lede">Commencez par le profil client, en haut.<sup>2</sup> Posez une pastille numérotée par idée, puis rédigez-la dans la vue éclatée, sous le schéma. Votre canevas est enregistré dans ce navigateur.</p>',
     '<p class="lede">Commencez par le profil client, en haut.<sup>2</sup> Posez une pastille numérotée par idée, puis rédigez-la dans la vue éclatée, sous le schéma. Votre canevas est enregistré automatiquement.</p>')
 rep('    <p class="status framed-only">L\'export PDF, l\'export Notion et le lien de partage s\'activent sur la version hébergée de cette page.</p>\n', '')

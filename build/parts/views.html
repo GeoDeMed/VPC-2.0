@@ -8,7 +8,7 @@
     <div class="menu" id="menu" hidden>
       <a class="menu-main" href="./">Mes canevas</a>
       <a class="menu-item" href="?v=partages">Partagés avec moi</a>
-      <a class="menu-item" id="menu-collab" href="?v=collaborateurs">Inviter un collaborateur</a>
+      <a class="menu-item" id="menu-collab" href="?v=collaborer">Collaborer</a>
       <a class="menu-account" href="?v=compte">Mon compte</a>
       <hr class="menu-sep">
       <button class="menu-logout" id="b-logout" type="button">Se déconnecter</button>
@@ -165,31 +165,27 @@
 </main>
 
 <main class="app-view" id="view-collab" hidden>
-  <div class="list-head"><div><p class="eyebrow">Collaborateurs</p><h1>Inviter des collaborateurs</h1></div></div>
+  <div class="list-head"><div><p class="eyebrow">Collaborer</p><h1>Travailler à plusieurs</h1></div></div>
   <p class="hint" id="co-empty" hidden>Vous n'avez pas encore de canevas. Créez-en un depuis <a href="./">Mes canevas</a>, puis revenez ici pour inviter des collaborateurs.</p>
   <div class="co-body" id="co-body">
     <section class="acc-sec">
-      <form class="login-form" onsubmit="return false">
-        <label for="co-canvas">Canevas</label>
-        <select id="co-canvas" class="co-select"></select>
-      </form>
-      <p class="hint">Seules les adresses de la liste, et vous, peuvent ouvrir ce canevas. Chacune reçoit le lien par e-mail et se connecte avec un code envoyé à cette adresse.</p>
-    </section>
-    <section class="acc-sec">
       <h2>Inviter</h2>
       <form class="login-form" id="co-form">
-        <label for="co-emails">Adresses e-mail, séparées par une virgule, un espace ou un retour à la ligne</label>
-        <textarea id="co-emails" rows="3" autocomplete="off" spellcheck="false" placeholder="prenom.nom@exemple.fr, autre.personne@exemple.fr"></textarea>
+        <label for="co-canvas">Canevas</label>
+        <select id="co-canvas" class="co-select"></select>
+        <label for="co-input">Adresses e-mail</label>
+        <div class="chips" id="co-chips"><input id="co-input" type="email" inputmode="email" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="prenom.nom@exemple.fr"></div>
+        <p class="hint co-tip">Validez chaque adresse avec Entrée, une virgule ou un espace. Touchez une bulle puis Effacer pour la retirer.</p>
         <label for="co-role">Droit</label>
         <select id="co-role" class="co-select"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select>
-        <p class="row"><button class="btn primary" type="submit" disabled>Inviter</button><span class="ok-mark" hidden aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></p>
+        <p class="row"><button class="btn primary" type="submit" disabled>Inviter</button><button class="btn ghostb" id="co-copylink" type="button">Copier le lien du canevas</button><span class="ok-mark" hidden aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></p>
       </form>
+      <p class="hint">Seules les personnes invitées, et vous, peuvent ouvrir le canevas. Chacune reçoit le lien par e-mail et se connecte avec un code envoyé à son adresse.</p>
     </section>
     <section class="acc-sec">
-      <h2>Collaborateurs de ce canevas</h2>
-      <ul class="share-list co-list" id="co-list"></ul>
-      <p class="hint">Invitation envoyée : la personne n'a pas encore de compte. En attente : son compte existe, son accès est transmis dès que vous ouvrez cette page, le canevas ou votre liste. Accès actif : elle peut ouvrir le canevas. Seul le créateur du canevas peut retirer un collaborateur.</p>
-      <p class="row"><a class="btn ghostb" id="co-open" href="./">Ouvrir le canevas</a><button class="btn ghostb" id="co-copylink" type="button">Copier le lien du canevas</button></p>
+      <h2>Vos collaborateurs</h2>
+      <div class="people" id="co-people"></div>
+      <p class="hint">Invitation envoyée : la personne n'a pas encore de compte. En attente : son compte existe, son accès lui est transmis dès que vous ouvrez cette page, le canevas ou votre liste. Accès actif : elle peut ouvrir le canevas. Retirer une personne change la clé du canevas : elle ne peut plus rien lire de nouveau.</p>
     </section>
   </div>
   <p class="status" id="co-msg" role="status" aria-live="polite"></p>
@@ -204,6 +200,10 @@
     <div><p class="eyebrow">Mes canevas</p><h1>Canevas de proposition de valeur<span class="beta" title="Version bêta">BETA</span></h1></div>
     <button class="btn primary" id="b-new" type="button">Nouveau canevas</button>
   </div>
+  <form class="name-form new-form" id="new-form" hidden>
+    <label for="new-name">Nom du nouveau canevas</label>
+    <div class="name-row"><input id="new-name" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Par exemple : Offre vélos cargo"><button class="btn primary" type="submit">Créer</button><button class="btn ghostb" id="new-cancel" type="button">Annuler</button></div>
+  </form>
   <ul class="clist" id="clist"></ul>
   <section class="shared-sec" id="shared-sec" hidden>
     <h2>Partagés avec moi</h2>

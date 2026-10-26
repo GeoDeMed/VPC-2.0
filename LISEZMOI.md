@@ -50,11 +50,12 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
 
 ## Utilisation
 
-- **Nouveau canevas** depuis « Mes canevas ».
-- **Inviter un collaborateur**, dans le menu :
-  - Ajoutez une ou plusieurs adresses et choisissez « Lecture seule » ou « Peut modifier ». Chaque personne reçoit un e-mail avec le lien, et son statut s'affiche : « Invitation envoyée », « En attente » ou « Accès actif ». Seul le créateur du canevas peut inviter ou retirer quelqu'un.
-  - Si elle n'a pas encore de compte, son accès est finalisé automatiquement la prochaine fois que le créateur ouvre le canevas ou sa liste, après qu'elle a créé son compte.
-  - « Retirer » coupe l'accès et rechiffre le canevas avec une nouvelle clé.
+- **Nouveau canevas** depuis « Mes canevas » : donnez-lui un nom, puis « Créer ». Le nom se change à tout moment, dans le titre du canevas ouvert ou avec « Renommer » dans la liste.
+- **Collaborer**, dans le menu :
+  - Choisissez le canevas, tapez les adresses : chaque adresse complète devient une bulle bleue (validée par Entrée, une virgule ou un espace ; un collage de plusieurs adresses, même au format « Nom <adresse> », est découpé tout seul). Touchez une bulle puis Effacer, ou son ×, pour la retirer. Choisissez « Lecture seule » ou « Peut modifier », puis « Inviter ». Chaque personne reçoit un e-mail avec le lien.
+  - « Vos collaborateurs » liste toutes les personnes invitées, sur tous vos canevas, avec leur statut (« Invitation envoyée », « En attente » ou « Accès actif ») et leur droit, modifiable. Seul le créateur d'un canevas peut inviter ou retirer quelqu'un.
+  - Si la personne n'a pas encore de compte, son accès est finalisé automatiquement la prochaine fois que le créateur ouvre cette page, le canevas ou sa liste, après qu'elle a créé son compte.
+  - « Retirer » coupe l'accès à un canevas, « Retirer de tous les canevas » à tous ; chaque canevas concerné est rechiffré avec une nouvelle clé.
 - **Mon compte :**
   - changer de mot de passe ;
   - « Me déconnecter de partout » ;

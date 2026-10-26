@@ -3,7 +3,7 @@
 (function(){
   const $ = id=>document.getElementById(id);
   const params = new URLSearchParams(location.search);
-  const cid = params.get('c'), view = params.get('v');
+  const cid = params.get('c'), view = params.get('v') === 'collaborateurs' ? 'collaborer' : params.get('v');
   async function api(a, opts){
     const o = {credentials:'same-origin', headers:{}};
     if (opts && opts.body !== undefined){ o.method='POST'; o.headers['Content-Type']='application/json'; o.headers['X-VPC']='1'; o.body=JSON.stringify(opts.body); if (opts.keepalive) o.keepalive = true; }
@@ -109,7 +109,7 @@
   let ME = null; // {uid, pub, mk, priv, email, name}
   async function remember(uid, pub, opened){ ME = Object.assign({uid, pub}, opened); await Vault.put(uid, ME); }
 
-  const titleOf = d=>String((d && (String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
+  const titleOf = d=>String((d && (String(d.nom||'').trim() || String(d.produit||'').trim() || String(d.organisation||'').trim())) || 'Sans titre').slice(0,180);
   const pwOk = (a, b, msg)=>{ if (a.length < 10){ msg.textContent = 'Le mot de passe doit faire 10 caractères au moins.'; return false; } if (a !== b){ msg.textContent = 'Les deux mots de passe ne sont pas identiques.'; return false; } return true; };
 
   // ---------- Connexion ----------
@@ -503,8 +503,9 @@
       let title = 'Canevas illisible';
       try { const o = await openCanvas(c); title = o.meta.title; grantPending(c.id, o.ck, c.shares).catch(()=>{}); } catch(e){}
       const n = c.shares.length;
-      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><button class="btn warn" type="button">Supprimer</button>';
-      twoStep(li.querySelector('button'), 'Supprimer', 'Confirmer la suppression', async ()=>{
+      li.innerHTML = '<a href="?c='+encodeURIComponent(c.id)+'">'+esc(title)+'<small>Modifié le '+esc(fmt(c.updated_at))+(n ? ' · Partagé avec '+n+(n>1?' personnes':' personne') : '')+'</small></a><div class="li-actions"><button class="btn ghostb" type="button">Renommer</button><button class="btn warn" type="button">Supprimer</button></div>';
+      li.querySelector('.ghostb').addEventListener('click', ()=>renameInList(li, c, title));
+      twoStep(li.querySelector('.warn'), 'Supprimer', 'Confirmer la suppression', async ()=>{
         try { await api('delete',{body:{id:c.id}}); li.remove(); msg.textContent = 'Canevas supprimé.'; } catch(e){ msg.textContent = 'La suppression a échoué.'; }
       });
       ul.appendChild(li);
@@ -539,6 +540,32 @@
       });
       groupOf(title ? owner : '').appendChild(li);
     }
+  }
+
+  // Renommer depuis la liste : le nom est enregistré dans le canevas, chiffré comme le reste.
+  function renameInList(li, c, title){
+    const msg = $('list-msg'), keep = li.innerHTML;
+    li.innerHTML = '<form class="name-form"><input type="text" maxlength="120" autocomplete="off" spellcheck="false" aria-label="Nouveau nom du canevas"><button class="btn primary" type="submit">OK</button><button class="btn ghostb" type="button">Annuler</button></form>';
+    const f = li.querySelector('form'), inp = f.querySelector('input');
+    inp.value = title === 'Sans titre' || title === 'Canevas illisible' ? '' : title; inp.focus(); inp.select();
+    const back = ()=>showList();
+    f.querySelector('.ghostb').onclick = back;
+    inp.addEventListener('keydown', e=>{ if (e.key === 'Escape') back(); });
+    f.onsubmit = async e=>{
+      e.preventDefault();
+      const nom = inp.value.trim(); if (!nom){ inp.focus(); return; }
+      f.querySelectorAll('button,input').forEach(x=>x.disabled = true);
+      try {
+        for (let tries = 0; ; tries++){
+          const g = await api('get',{qs:'id='+encodeURIComponent(c.id)});
+          const ck = await K.canvasKey(await K.unwrap(ME, g.wrap));
+          const meta = await K.decJSON(ck.key, g.meta_ct), data = Object.assign({}, await K.decJSON(ck.key, g.data_ct), {nom});
+          try { await api('save',{body:{id: c.id, rev: g.rev, meta_ct: await K.encJSON(ck.key, Object.assign({}, meta, {title: titleOf(data), by: ME.name || ME.email})), data_ct: await K.encJSON(ck.key, data)}}); break; }
+          catch(err){ if (err.status !== 409 || tries >= 2) throw err; }
+        }
+        msg.textContent = 'Canevas renommé.'; showList();
+      } catch(err){ li.innerHTML = keep; msg.textContent = 'Le renommage a échoué. '+errText(err); showList(); }
+    };
   }
 
   async function createCanvas(data){
@@ -611,7 +638,7 @@
     show('view-editor');
     if (c.role !== 'view') saved.textContent = 'Enregistré';
     if (c.role === 'owner'){
-      $('menu-collab').href = '?v=collaborateurs&c='+encodeURIComponent(id);
+      $('menu-collab').href = '?v=collaborer&c='+encodeURIComponent(id);
       grantPending(id, ck, c.shares).catch(()=>{});
     }
     window.__VPC_START__();
@@ -693,21 +720,95 @@
     };
   }
 
-  // ---------- Collaborateurs ----------
+  // ---------- Adresses en bulles, comme dans Mail ----------
+  // Une adresse complète devient une bulle bleue : elle se retire d'un bloc (touchée puis Effacer, ou le ×).
+  const EMAIL_RE = /^[^@\s<>,;"']+@[^@\s<>,;"']+\.[^@\s<>,;"'.]+$/;
+  function chipField(box, input, onChange){
+    let items = [], sel = -1;
+    const draw = ()=>{
+      box.querySelectorAll('.chip').forEach(c=>c.remove());
+      items.forEach((e, k)=>{
+        const c = document.createElement('span');
+        c.className = 'chip' + (k === sel ? ' sel' : ''); c.textContent = e;
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'chip-x'; x.tabIndex = -1;
+        x.setAttribute('aria-label', 'Retirer '+e); x.textContent = '×';
+        x.addEventListener('mousedown', ev=>ev.preventDefault());
+        x.addEventListener('click', ev=>{ ev.stopPropagation(); remove(k); });
+        c.addEventListener('mousedown', ev=>ev.preventDefault());
+        c.addEventListener('click', ()=>{ sel = sel === k ? -1 : k; draw(); input.focus(); });
+        c.appendChild(x); box.insertBefore(c, input);
+      });
+      input.placeholder = items.length ? '' : 'prenom.nom@exemple.fr';
+      onChange();
+    };
+    const remove = k=>{ items.splice(k, 1); sel = -1; draw(); input.focus(); };
+    // Ajoute toutes les adresses trouvées dans un texte (y compris « Nom <adresse> ») ; renvoie ce qui n'en est pas une.
+    const take = text=>{
+      const rest = []; let found = 0;
+      for (let w of String(text).split(/[\s,;]+/)){
+        w = w.replace(/^[<("']+|[>)"'.]+$/g, '');
+        if (!w) continue;
+        const e = norm(w);
+        if (EMAIL_RE.test(e)){ found++; if (!items.includes(e)) items.push(e); } else rest.push(w);
+      }
+      sel = -1;
+      return found ? rest.filter(w=>w.includes('@')) : rest; // les noms autour d'une adresse (« Nom <adresse> ») sont ignorés
+    };
+    const commit = ()=>{
+      const v = input.value; if (!v.trim()) return true;
+      const rest = take(v); input.value = rest.join(' ');
+      input.classList.toggle('bad', rest.length > 0); draw();
+      return !rest.length;
+    };
+    input.addEventListener('keydown', e=>{
+      if (e.isComposing) return;
+      if (e.key === 'Enter' || e.key === ',' || e.key === ';' || e.key === ' ' || (e.key === 'Tab' && input.value.trim())){
+        if (e.key === 'Enter' && !input.value.trim() && items.length) return; // Entrée sur un champ vide : envoie le formulaire
+        e.preventDefault(); commit(); return;
+      }
+      if ((e.key === 'Backspace' || e.key === 'Delete') && !input.value){
+        if (sel >= 0){ e.preventDefault(); remove(sel); }
+        else if (e.key === 'Backspace' && items.length){ e.preventDefault(); sel = items.length - 1; draw(); }
+        return;
+      }
+      if (e.key === 'ArrowLeft' && !input.value && items.length){ sel = sel < 0 ? items.length - 1 : Math.max(0, sel - 1); draw(); return; }
+      if (e.key === 'ArrowRight' && sel >= 0){ sel = sel + 1 < items.length ? sel + 1 : -1; draw(); return; }
+      if (e.key === 'Escape' && sel >= 0){ sel = -1; draw(); return; }
+      if (sel >= 0 && e.key.length === 1){ sel = -1; draw(); }
+    });
+    // Claviers mobiles : les touches n'arrivent pas toujours, on regarde donc aussi le texte saisi.
+    input.addEventListener('input', ()=>{
+      input.classList.remove('bad');
+      if (/[\s,;]/.test(input.value)){ const v = input.value, end = /[\s,;]$/.test(v);
+        const parts = v.split(/[\s,;]+/); const last = end ? '' : parts.pop();
+        const rest = take(parts.join(' ')); input.value = rest.concat(last ? [last] : []).join(' ');
+        input.classList.toggle('bad', rest.length > 0); draw(); }
+      else onChange();
+    });
+    input.addEventListener('paste', e=>{
+      const t = (e.clipboardData || window.clipboardData).getData('text');
+      if (!t) return; e.preventDefault();
+      const rest = take(input.value + ' ' + t); input.value = rest.join(' ');
+      input.classList.toggle('bad', rest.length > 0); draw();
+    });
+    input.addEventListener('blur', ()=>{ commit(); if (sel >= 0){ sel = -1; draw(); } });
+    box.addEventListener('click', e=>{ if (e.target === box) input.focus(); });
+    return {
+      get list(){ return items.slice(); },
+      commit, pending: ()=>input.value.trim() !== '',
+      set(list){ items = list.slice(); sel = -1; input.value = ''; input.classList.remove('bad'); draw(); }
+    };
+  }
+
+  // ---------- Collaborer ----------
   async function showCollab(pre){
     show('view-collab');
-    const sel = $('co-canvas'), list = $('co-list'), msg = $('co-msg'), form = $('co-form'), ta = $('co-emails');
-    let r;
-    try { r = await api('list'); } catch(e){ msg.textContent = 'Impossible de charger vos canevas.'; return; }
-    const own = [];
-    for (const c of r.canvases){ try { own.push({id: c.id, title: (await openCanvas(c)).meta.title}); } catch(e){} }
-    if (!own.length){ $('co-body').hidden = true; $('co-empty').hidden = false; return; }
-    sel.innerHTML = own.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.title)+'</option>').join('');
-    if (pre && own.some(o=>o.id===pre)) sel.value = pre;
-    let cur = null, busy = Promise.resolve();
+    const sel = $('co-canvas'), people = $('co-people'), msg = $('co-msg'), form = $('co-form');
+    let own = [], busy = Promise.resolve();
     const queue = fn=>(busy = busy.then(fn, fn));
-    const splitEmails = t=>[...new Set(String(t).split(/[\s,;]+/).map(norm).filter(Boolean))];
-    const upd = guard(form, ()=>!!cur && splitEmails(ta.value).length > 0);
+    const statusOf = it=>!it.pending ? ['st-ok','Accès actif'] : it.pub ? ['st-wait','En attente'] : ['st-sent','Invitation envoyée'];
+    const chips = chipField($('co-chips'), $('co-input'), ()=>upd());
+    const upd = guard(form, ()=>own.length > 0 && (chips.list.length > 0 || chips.pending()));
 
     // Le canevas tel qu'il est sur le serveur maintenant : clé, contenu et liste de partage.
     async function fetchCanvas(id){
@@ -715,45 +816,74 @@
       const ck = await K.canvasKey(await K.unwrap(ME, c.wrap));
       return {c, ck};
     }
-    async function render(items){
-      cur.shares = items;
-      list.innerHTML = items.length ? '' : '<li><span>Ce canevas n\'est encore partagé avec personne.</span></li>';
-      for (const it of items){
-        let label = '(adresse illisible)';
-        try { label = new TextDecoder().decode(await K.dec(cur.ck.key, it.label_ct)); } catch(e){}
-        it.email = label;
-        const st = !it.pending ? ['st-ok','Accès actif'] : it.pub ? ['st-wait','En attente'] : ['st-sent','Invitation envoyée'];
-        const li = document.createElement('li');
-        li.innerHTML = '<span>'+esc(label)+'<i class="badge '+st[0]+'">'+st[1]+'</i></span><div><select aria-label="Droit de '+esc(label)+'"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select><button class="btn warn" type="button">Retirer</button></div>';
-        const s = li.querySelector('select'); s.value = it.role;
-        s.addEventListener('change', ()=>queue(async ()=>{
-          try { await render((await api('share-role',{body:{id: cur.id, h: it.h, role: s.value}})).shares); msg.textContent = 'Droit modifié pour '+label+'.'; }
-          catch(e){ msg.textContent = errText(e); s.value = it.role; }
-        }));
-        twoStep(li.querySelector('button'), 'Retirer', 'Confirmer', ()=>queue(()=>removeShare(it)));
-        list.appendChild(li);
+    // Tous vos canevas, avec leurs invités en clair (déchiffrés ici, dans le navigateur).
+    async function loadAll(){
+      const r = await api('list'), out = [];
+      for (const c of r.canvases){
+        try {
+          const ck = await K.canvasKey(await K.unwrap(ME, c.wrap));
+          const meta = await K.decJSON(ck.key, c.meta_ct);
+          let shares = c.shares;
+          const g = await grantPending(c.id, ck, shares).catch(()=>null);
+          if (g) shares = g;
+          out.push({id: c.id, title: meta.title || 'Sans titre', ck, shares: await labels(ck, shares)});
+        } catch(e){}
+      }
+      own = out;
+    }
+    async function labels(ck, shares){
+      for (const it of shares){ try { it.email = new TextDecoder().decode(await K.dec(ck.key, it.label_ct)); } catch(e){ it.email = '(adresse illisible)'; } }
+      return shares;
+    }
+    function fillSelect(){
+      const keep = sel.value || pre;
+      sel.innerHTML = own.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.title)+'</option>').join('');
+      if (keep && own.some(o=>o.id===keep)) sel.value = keep;
+    }
+    // Une fiche par personne : ses canevas, son statut et son droit sur chacun.
+    function drawPeople(){
+      const byEmail = new Map();
+      for (const o of own) for (const it of o.shares){
+        if (!byEmail.has(it.email)) byEmail.set(it.email, []);
+        byEmail.get(it.email).push({o, it});
+      }
+      people.innerHTML = '';
+      if (!byEmail.size){ people.innerHTML = '<p class="hint">Vous n\'avez encore invité personne.</p>'; return; }
+      for (const [email, rows] of [...byEmail].sort((a, b)=>a[0].localeCompare(b[0]))){
+        const card = document.createElement('div'); card.className = 'person';
+        const n = rows.length;
+        card.innerHTML = '<div class="person-head"><span class="avatar" aria-hidden="true">'+esc(email[0].toUpperCase())+'</span><div><strong>'+esc(email)+'</strong><small>'+n+' canevas'+'</small></div></div><ul class="share-list co-list"></ul>';
+        const ul = card.querySelector('ul');
+        for (const {o, it} of rows){
+          const st = statusOf(it), li = document.createElement('li');
+          li.innerHTML = '<span><a href="?c='+encodeURIComponent(o.id)+'">'+esc(o.title)+'</a><i class="badge '+st[0]+'">'+st[1]+'</i></span><div><select aria-label="Droit de '+esc(email)+' sur '+esc(o.title)+'"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select><button class="btn warn" type="button">Retirer</button></div>';
+          const s = li.querySelector('select'); s.value = it.role;
+          s.addEventListener('change', ()=>queue(async ()=>{
+            try { o.shares = await labels(o.ck, (await api('share-role',{body:{id: o.id, h: it.h, role: s.value}})).shares); msg.textContent = 'Droit modifié pour '+email+' sur « '+o.title+' ».'; }
+            catch(e){ msg.textContent = errText(e); s.value = it.role; }
+            drawPeople();
+          }));
+          twoStep(li.querySelector('button'), 'Retirer', 'Confirmer', ()=>queue(async ()=>{ await removeShare(o, it); drawPeople(); }));
+          ul.appendChild(li);
+        }
+        if (n > 1){
+          const p = document.createElement('p'); p.className = 'row';
+          p.innerHTML = '<button class="btn warn" type="button">Retirer de tous les canevas</button>';
+          twoStep(p.querySelector('button'), 'Retirer de tous les canevas', 'Confirmer le retrait de '+n+' canevas', ()=>queue(async ()=>{
+            let ok = 0; for (const {o, it} of rows) if (await removeShare(o, it, true)) ok++;
+            msg.textContent = ok === n ? email+' n\'a plus accès à aucun de vos canevas.' : msg.textContent;
+            drawPeople();
+          }));
+          card.appendChild(p);
+        }
+        people.appendChild(card);
       }
     }
-    async function load(id){
-      cur = null; upd(); msg.textContent = '';
-      list.innerHTML = '<li><span>Chargement…</span></li>';
-      $('co-open').href = '?c='+encodeURIComponent(id);
-      $('menu-collab').href = '?v=collaborateurs&c='+encodeURIComponent(id);
-      try { history.replaceState(null, '', '?v=collaborateurs&c='+encodeURIComponent(id)); } catch(e){}
-      try {
-        const {c, ck} = await fetchCanvas(id);
-        cur = {id, ck, shares: c.shares};
-        await render(c.shares);
-        const g = await grantPending(id, ck, c.shares).catch(()=>null);
-        if (g) await render(g);
-      } catch(e){ list.innerHTML = ''; msg.textContent = 'Ce canevas n\'a pas pu être chargé. '+errText(e); }
-      upd();
-    }
     // Retirer quelqu'un change la clé du canevas : la personne retirée ne peut plus rien déchiffrer de nouveau.
-    async function removeShare(it){
-      msg.textContent = 'Retrait et rechiffrement…';
+    async function removeShare(o, it, quiet){
+      msg.textContent = 'Retrait de '+it.email+' sur « '+o.title+' »…';
       try {
-        const {c, ck} = await fetchCanvas(cur.id);
+        const {c, ck} = await fetchCanvas(o.id);
         const meta = await K.decJSON(ck.key, c.meta_ct), data = await K.decJSON(ck.key, c.data_ct);
         const nk = await K.newCanvasKey(), rest = {};
         for (const s of c.shares){
@@ -761,47 +891,58 @@
           let email = ''; try { email = new TextDecoder().decode(await K.dec(ck.key, s.label_ct)); } catch(e){}
           rest[s.h] = {wrap: s.pub ? await K.wrapFor(s.pub, nk.raw) : null, label_ct: await K.enc(nk.key, K.te.encode(email))};
         }
-        const r = await api('rekey',{body:{id: cur.id, rev: c.rev, remove: it.h, wrap: await K.ownerWrap(ME, nk.raw), shares: rest,
+        const r = await api('rekey',{body:{id: o.id, rev: c.rev, remove: it.h, wrap: await K.ownerWrap(ME, nk.raw), shares: rest,
           meta_ct: await K.encJSON(nk.key, meta), data_ct: await K.encJSON(nk.key, data)}});
-        cur.ck = nk; await render(r.shares); msg.textContent = it.email+' n\'a plus accès à ce canevas.';
-      } catch(e){ msg.textContent = e.status===409 ? e.message+' Réessayez.' : 'Le retrait a échoué. '+errText(e); }
+        o.ck = nk; o.shares = await labels(nk, r.shares);
+        if (!quiet) msg.textContent = it.email+' n\'a plus accès à « '+o.title+' ».';
+        return true;
+      } catch(e){ msg.textContent = e.status===409 ? e.message+' Réessayez.' : 'Le retrait a échoué. '+errText(e); return false; }
     }
     form.onsubmit = ev=>{
       ev.preventDefault();
-      const emails = splitEmails(ta.value), role = $('co-role').value;
-      if (!cur || !emails.length) return;
-      const bad = emails.filter(e=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
-      if (bad.length){ msg.textContent = 'Adresse non valide : '+bad.join(', ')+'.'; return; }
+      const o = own.find(x=>x.id===sel.value);
+      if (!o) return;
+      if (!chips.commit()){ msg.textContent = 'Adresse non valide : '+$('co-input').value+'.'; return; }
+      const emails = chips.list, role = $('co-role').value;
+      if (!emails.length) return;
       form.querySelector('button[type=submit]').disabled = true;
       queue(async ()=>{
-        const ok = [], mailFail = [], errs = [];
-        let shares = cur.shares;
+        const ok = [], mailFail = [], errs = [], left = [];
+        let shares = o.shares;
         for (const email of emails){
           msg.textContent = 'Invitation de '+email+'…';
           try {
-            const r = await api('share-add',{body:{id: cur.id, email, role, from: ME.email, label_ct: await K.enc(cur.ck.key, K.te.encode(email))}});
+            const r = await api('share-add',{body:{id: o.id, email, role, from: ME.email, label_ct: await K.enc(o.ck.key, K.te.encode(email))}});
             shares = r.shares; (r.notified ? ok : mailFail).push(email);
-          } catch(e){ errs.push(email+' : '+errText(e)); }
+          } catch(e){ errs.push(email+' : '+errText(e)); if (e.status !== 409) left.push(email); }
         }
-        const g = await grantPending(cur.id, cur.ck, shares).catch(()=>null);
-        await render(g || shares);
+        const g = await grantPending(o.id, o.ck, shares).catch(()=>null);
+        o.shares = await labels(o.ck, g || shares);
+        drawPeople();
         const parts = [];
         if (ok.length) parts.push((ok.length>1 ? 'Invitations envoyées à ' : 'Invitation envoyée à ')+ok.join(', ')+'.');
         if (mailFail.length) parts.push('Accès ajouté pour '+mailFail.join(', ')+', mais l\'e-mail n\'est pas parti : envoyez le lien vous-même.');
         if (errs.length) parts.push(errs.join(' '));
         msg.textContent = parts.join(' ');
-        if (!errs.length){ ta.value = ''; $('co-role').value = 'view'; done(form); }
+        chips.set(left);
+        if (!left.length){ $('co-role').value = 'view'; done(form); }
         upd();
       });
     };
-    sel.onchange = ()=>queue(()=>load(sel.value));
+    sel.onchange = ()=>{
+      $('menu-collab').href = '?v=collaborer&c='+encodeURIComponent(sel.value);
+      try { history.replaceState(null, '', '?v=collaborer&c='+encodeURIComponent(sel.value)); } catch(e){}
+    };
     $('co-copylink').onclick = async ()=>{
-      if (!cur) return;
-      const link = location.origin + location.pathname + '?c=' + encodeURIComponent(cur.id);
-      try { await navigator.clipboard.writeText(link); msg.textContent = 'Lien copié. Il ne s\'ouvre que pour vous et les adresses de la liste.'; }
+      if (!sel.value) return;
+      const link = location.origin + location.pathname + '?c=' + encodeURIComponent(sel.value);
+      try { await navigator.clipboard.writeText(link); msg.textContent = 'Lien copié. Il ne s\'ouvre que pour vous et les personnes invitées.'; }
       catch(e){ msg.textContent = link; }
     };
-    await queue(()=>load(sel.value));
+    people.innerHTML = '<p class="hint">Chargement…</p>';
+    try { await queue(loadAll); } catch(e){ people.innerHTML = ''; msg.textContent = 'Impossible de charger vos canevas. '+errText(e); return; }
+    if (!own.length){ $('co-body').hidden = true; $('co-empty').hidden = false; return; }
+    fillSelect(); sel.onchange(); drawPeople(); upd();
   }
 
   $('b-logout').addEventListener('click', logout);
@@ -812,9 +953,16 @@
   menuBtn.addEventListener('click', e=>{ e.stopPropagation(); setMenu(menu.hidden); if (!menu.hidden) menu.querySelector('a,button').focus(); });
   document.addEventListener('click', e=>{ if (!menu.hidden && !menu.contains(e.target)) setMenu(false); });
   document.addEventListener('keydown', e=>{ if (e.key==='Escape' && !menu.hidden){ setMenu(false); menuBtn.focus(); } });
-  $('b-new').addEventListener('click', async ()=>{
-    try { await createCanvas({v:4, notes:[]}); }
-    catch(e){ $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
+  // Nouveau canevas : on le nomme d'abord (le nom reste modifiable ensuite).
+  $('b-new').addEventListener('click', ()=>{ $('new-form').hidden = false; $('b-new').hidden = true; $('new-name').focus(); });
+  const closeNew = ()=>{ $('new-form').hidden = true; $('b-new').hidden = false; $('new-name').value = ''; };
+  $('new-cancel').addEventListener('click', closeNew);
+  $('new-name').addEventListener('keydown', e=>{ if (e.key === 'Escape') closeNew(); });
+  $('new-form').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const b = $('new-form').querySelector('button[type=submit]'); b.disabled = true;
+    try { await createCanvas({v:4, nom: $('new-name').value.trim().slice(0,120), notes:[]}); }
+    catch(err){ b.disabled = false; $('list-msg').textContent = 'La création a échoué. Réessayez.'; }
   });
 
   async function boot(){
@@ -846,7 +994,7 @@
     document.querySelectorAll('#menu a').forEach(a=>{ const v = new URLSearchParams(a.getAttribute('href').split('?')[1]||'').get('v');
       if ((v || null) === (cid && !view ? '__' : view)) a.setAttribute('aria-current', 'page'); });
     if (view === 'compte') return showAccount();
-    if (view === 'collaborateurs') return showCollab(cid);
+    if (view === 'collaborer') return showCollab(cid);
     if (view === 'partages') return showList(true);
     if (cid) showEditor(cid); else showList();
   }
