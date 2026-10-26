@@ -147,10 +147,11 @@ input:focus,textarea:focus{outline:none;border-bottom-color:var(--ui)}
 .cbox:focus-within{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 20%,transparent),0 2px 10px rgba(0,0,0,.06)}
 .cbox .chipn{flex:none;min-width:2.2cqw;height:2.2cqw;border-radius:1.1cqw;display:grid;place-items:center;font:700 .95cqw/1 var(--sans);color:var(--n-ink);padding:0 .35cqw;box-sizing:border-box;border:0;cursor:pointer}
 .cbox .cb-body{flex:1;min-width:0;display:grid;gap:.25cqw}
-.cbox input,.cbox textarea{font:inherit;border:0;background:transparent;padding:0;margin:0;outline:0;width:100%;color:var(--ink);resize:none;overflow:hidden}
-.cbox input{font-size:1.15cqw;font-weight:600;line-height:1.3}
-.cbox textarea{font-size:1.02cqw;line-height:1.38;color:var(--muted);display:block}
-.cbox input::placeholder,.cbox textarea::placeholder{color:var(--muted);opacity:.55}
+.cbox textarea{font:inherit;border:0;background:transparent;padding:0;margin:0;outline:0;width:100%;color:var(--ink);resize:none;overflow:hidden}
+.cbox textarea{display:block}
+.cbox .cb-t{font-size:1.15cqw;font-weight:600;line-height:1.3}
+.cbox .cb-d{font-size:1.02cqw;line-height:1.38;color:var(--muted)}
+.cbox textarea::placeholder{color:var(--muted);opacity:.55}
 .cb-subst{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 .cb-subst .cbox{position:relative;width:calc(228/1200*100%);min-width:200px}
 .stage:not(.textmode)~.cb-subst{display:none}
@@ -1158,16 +1159,18 @@ window.__VPC_START__ = function(){
     const L = lab(n), cs = colorStyle(n.c), d = document.createElement('div');
     d.className = 'cbox'; d.dataset.id = n.id;
     d.innerHTML = '<button type="button" class="chipn '+cs.cls+'" style="'+cs.style+'" aria-label="Pastille '+L+' : la montrer sur le schéma">'+L+'</button>'+
-      '<div class="cb-body"><input id="cb-t-'+n.id+'" aria-label="Titre de la pastille '+L+'" placeholder="Titre" value="'+esc(n.t)+'"'+(readOnly?' readonly':'')+'>'+
-      '<textarea id="cb-d-'+n.id+'" rows="1" aria-label="Détails de la pastille '+L+'" placeholder="Détails…"'+(readOnly?' readonly':'')+'>'+esc(n.d)+'</textarea></div>';
-    const t = d.querySelector('input'), ta = d.querySelector('textarea'), sync = ()=>{
+      '<div class="cb-body"><textarea class="cb-t" id="cb-t-'+n.id+'" rows="1" aria-label="Titre de la pastille '+L+'" placeholder="Titre"'+(readOnly?' readonly':'')+'>'+esc(n.t)+'</textarea>'+
+      '<textarea class="cb-d" id="cb-d-'+n.id+'" rows="1" aria-label="Détails de la pastille '+L+'" placeholder="Détails…"'+(readOnly?' readonly':'')+'>'+esc(n.d)+'</textarea></div>';
+    const t = d.querySelector('.cb-t'), ta = d.querySelector('.cb-d'), sync = ()=>{
       const et = document.getElementById('et-'+n.id), ed = document.getElementById('ed-'+n.id);
       if (et) et.value = n.t; if (ed){ ed.value = n.d; grow(ed); }
       const el = layer.querySelector('[data-id="'+n.id+'"]'); if (el) el.title = L+'. '+(n.t||'Sans titre')+(n.d ? '\n'+n.d : '');
       save(); layoutCallouts();
     };
     d.querySelector('.chipn').addEventListener('click', ()=>focusNote(n.id));
-    t.addEventListener('input', ()=>{ n.t = t.value; sync(); });
+    // Le titre tient sur plusieurs lignes si besoin, mais reste un titre : Entrée passe aux détails.
+    t.addEventListener('keydown', e=>{ if (e.key === 'Enter'){ e.preventDefault(); ta.focus(); } });
+    t.addEventListener('input', ()=>{ if (/\n/.test(t.value)) t.value = t.value.replace(/\n+/g, ' '); n.t = t.value; grow(t); sync(); });
     ta.addEventListener('input', ()=>{ n.d = ta.value; grow(ta); sync(); });
     return d;
   }
@@ -1184,6 +1187,7 @@ window.__VPC_START__ = function(){
   function layoutCallouts(){
     if (mode !== 'texte') return;
     const k = W / (stage.getBoundingClientRect().width || 1), GAP = 12, lines = [];
+    const nr = (layer.querySelector('.note')?.offsetWidth || 2*R) / 2 * k; // rayon réel des pastilles
     [[-10, 800], [870, 1590]].forEach(([y0, y1])=>{
       ['l','r'].forEach(side=>{
         const pos = state.notes.filter(n=>n.z !== 'substituts' && n.y >= y0 && n.y < y1 && (side === 'l') === !!LEFT[n.z]).sort((a,b)=>a.y-b.y)
@@ -1196,7 +1200,7 @@ window.__VPC_START__ = function(){
         if (pos.length && pos[0].y < y0 + 40){ const dd = y0 + 40 - pos[0].y; pos.forEach(p=>{ p.y += dd; }); }
         pos.forEach(p=>{
           const bx = side === 'l' ? 12 : W - 12 - BW, ex = side === 'l' ? bx + BW + 2 : bx - 2, cy = p.y + p.h/2;
-          const sx = p.n.x + (side === 'l' ? -R - 4 : R + 4), mid = (sx + ex) / 2;
+          const sx = p.n.x + (side === 'l' ? -nr - 4 : nr + 4), mid = (sx + ex) / 2;
           p.el.style.left = (bx/W*100)+'%'; p.el.style.top = ((p.y+TOP)/VH*100)+'%';
           lines.push('<path class="cline" d="M'+sx.toFixed(1)+' '+p.n.y.toFixed(1)+' C'+mid.toFixed(1)+' '+p.n.y.toFixed(1)+' '+mid.toFixed(1)+' '+cy.toFixed(1)+' '+ex+' '+cy.toFixed(1)+'"/><circle class="cdot" cx="'+sx.toFixed(1)+'" cy="'+p.n.y.toFixed(1)+'" r="3.2"/>');
         });
