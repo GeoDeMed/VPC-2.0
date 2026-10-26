@@ -357,7 +357,7 @@
         sections: [
           ['01 / Portée', 'Cette application.', ['Cette politique concerne l’application « Canevas de proposition de valeur ». Le responsable du traitement est NOM DE L’ÉDITEUR. Contact : '+mail+'.']],
           ['02 / Chiffrement', 'Ce que personne d’autre que vous ne peut lire.', ['Vos canevas, leurs titres, les adresses avec lesquelles vous les partagez et une copie de votre propre adresse sont chiffrés dans votre navigateur avant d’être envoyés, avec une clé issue de votre mot de passe. Le serveur ne stocke que ce texte chiffré : l’éditeur du site ne peut pas le lire.', 'Votre mot de passe ne quitte jamais votre navigateur. Le serveur reçoit seulement une clé de connexion qui en est dérivée, et n’en garde qu’un hachage.']],
-          ['03 / Serveur', 'Ce que le serveur conserve.', ['Pour chaque compte : une empreinte de l’adresse e-mail (qui permet de la reconnaître sans pouvoir la relire), votre clé publique, vos clés chiffrées, le hachage de la clé de connexion, un compteur d’essais de connexion ratés et la date de création du compte.', 'Pour chaque canevas : son contenu chiffré, ses dates de création et de modification, le nombre de personnes avec qui il est partagé et leurs droits (lecture ou modification).', 'Pour l’envoi des codes : l’empreinte de l’adresse, le code haché, l’heure d’envoi et une empreinte de votre adresse IP, effacés après 24 heures dès la visite suivante sur le site.']],
+          ['03 / Serveur', 'Ce que le serveur conserve.', ['Pour chaque compte : une empreinte de l’adresse e-mail (qui permet de la reconnaître sans pouvoir la relire), votre clé publique, vos clés chiffrées, le hachage de la clé de connexion, un compteur d’essais de connexion ratés et la date de création du compte.', 'Pour chaque canevas : son contenu chiffré, ses dates de création et de modification, le nombre de personnes avec qui il est partagé et leurs droits (lecture ou modification).', 'Pour chaque canevas partagé : l’heure à laquelle chaque participant l’a ouvert pour la dernière fois, et son nom d’affichage chiffré avec la clé du canevas, que seuls les participants peuvent lire. Ces lignes disparaissent quand la personne est retirée du canevas ou que le canevas est supprimé.', 'Pour l’envoi des codes : l’empreinte de l’adresse, le code haché, l’heure d’envoi et une empreinte de votre adresse IP, effacés après 24 heures dès la visite suivante sur le site.']],
           ['04 / E-mails', 'Codes et invitations.', ['Votre adresse e-mail passe en clair par le serveur au moment d’envoyer un code ou une invitation, puis elle est oubliée. Ces e-mails partent d’une boîte de messagerie hébergée par OVHcloud. Les éventuels avis de non-distribution reçus par cette boîte peuvent contenir l’adresse concernée.']],
           ['05 / Cookies et stockage', 'Strictement nécessaires.', ['Un seul cookie, « vpc_session », sert à vous garder connecté pendant 7 jours. Il n’est lisible que par le serveur et ne circule qu’en HTTPS.', 'Votre navigateur garde aussi, sur votre appareil uniquement : vos clés déverrouillées et votre adresse jusqu’à la déconnexion, votre adresse pendant l’inscription (effacée à la fermeture de l’onglet) et votre choix de langue.', 'OVHcloud indique que son hébergement mutualisé peut déposer un cookie technique « SERVER ID » pour répartir les requêtes entre serveurs. Sa durée est inférieure à 24 heures. Ce cookie ne sert pas à la publicité ou au profilage par Quorelix.']],
           ['06 / Suivi', 'Aucun suivi ajouté.', ['Le code de l’application n’intègre ni outil d’analyse d’audience, ni publicité, ni pixel de suivi, et ne charge aucun service tiers.', 'L’hébergement peut produire des journaux techniques (adresse IP, page demandée, heure, navigateur) pour son fonctionnement et sa sécurité. OVHcloud indique que « OVHcloud Web Statistics » est activé par défaut sur l’hébergement mutualisé ; sa désactivation doit être confirmée dans le compte OVHcloud.']],
@@ -410,7 +410,7 @@
         sections: [
           ['01 / Scope', 'This application.', ['This policy covers the “Value Proposition Canvas” application. The data controller is NOM DE L’ÉDITEUR. Contact: '+mail+'.']],
           ['02 / Encryption', 'What no one but you can read.', ['Your canvases, their titles, the addresses you share them with, and a copy of your own address are encrypted in your browser before being sent, with a key derived from your password. The server stores only this encrypted text: the site publisher cannot read it.', 'Your password never leaves your browser. The server only receives a login key derived from it, and keeps only a hash of that key.']],
-          ['03 / Server', 'What the server keeps.', ['For each account: a fingerprint of the email address (which recognizes it without being able to read it back), your public key, your encrypted keys, the hash of the login key, a failed-login counter, and the account creation date.', 'For each canvas: its encrypted content, its creation and modification dates, the number of people it is shared with, and their rights (read or edit).', 'For sending codes: the address fingerprint, the hashed code, the time sent, and a fingerprint of your IP address, deleted after 24 hours at the next visit to the site.']],
+          ['03 / Server', 'What the server keeps.', ['For each account: a fingerprint of the email address (which recognizes it without being able to read it back), your public key, your encrypted keys, the hash of the login key, a failed-login counter, and the account creation date.', 'For each canvas: its encrypted content, its creation and modification dates, the number of people it is shared with, and their rights (read or edit).', 'For each shared canvas: the last time each participant had it open, and their display name encrypted with the canvas key, which only participants can read. These rows are removed when the person is removed from the canvas or the canvas is deleted.', 'For sending codes: the address fingerprint, the hashed code, the time sent, and a fingerprint of your IP address, deleted after 24 hours at the next visit to the site.']],
           ['04 / Email', 'Codes and invitations.', ['Your email address passes through the server in clear text when a code or invitation is sent, and is then forgotten. These emails are sent from a mailbox hosted by OVHcloud. Any non-delivery notices received by that mailbox may contain the address concerned.']],
           ['05 / Cookies and storage', 'Strictly necessary.', ['A single cookie, “vpc_session”, keeps you signed in for 7 days. Only the server can read it, and it is only sent over HTTPS.', 'Your browser also keeps, on your device only: your unlocked keys and your address until you sign out, your address during sign-up (cleared when the tab closes), and your language choice.', 'OVHcloud states that its shared hosting may set a technical “SERVER ID” cookie to route requests between servers. It lasts less than 24 hours. Quorelix does not use it for advertising or profiling.']],
           ['06 / Tracking', 'No tracking added.', ['The application code includes no audience analytics, advertising, or tracking pixel, and loads no third-party service.', 'The hosting may generate technical logs (IP address, requested page, time, browser) for its operation and security. OVHcloud states that “OVHcloud Web Statistics” is enabled by default on shared hosting; disabling it must be confirmed in the OVHcloud account.']],
@@ -627,6 +627,7 @@
     const queue = fn=>(busy = busy.then(fn, fn));
     const live = liveSync({id, rev: c.rev, shared: c.role !== 'owner' || (c.shares||[]).length > 0, myName,
       getRev: ()=>rev, keyNow: ()=>ck, queue, onUpdate: ()=>queue(()=>sync(false))});
+    if (live.shared) presenceBar({id, myName, owner: meta.owner, keyNow: ()=>ck});
     window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); live.active(); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 800); };
     window.addEventListener('pagehide', ()=>flush(true));
     document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flush(true); });
@@ -713,11 +714,56 @@
     document.addEventListener('visibilitychange', ()=>{ if (!document.hidden){ delay = 2000; clearTimeout(t); t = setTimeout(tick, 0); o.shared && o.queue(poll); } });
     tick();
     return {
+      shared: o.shared,
       active(){ if (delay > 2000){ delay = 2000; tick(); } },
       seen(r){ if (r >= shown){ shown = r; if (!go.hidden && el.classList.contains('on')) hide(); } },
       say(m, ms){ clearTimeout(hideT); txt.textContent = m; go.hidden = true; open(); hideT = setTimeout(hide, ms); },
       hide
     };
+  }
+
+  // ---------- Présence : qui est sur le canevas ----------
+  // Toutes les 20 secondes (onglet visible), chacun signale qu'il est là, avec son nom chiffré par la clé du canevas.
+  function presenceBar(o){
+    const ONLINE = 45, GRADS = [['#FF9F8E','#FF7E79'],['#64B5FF','#007AFF'],['#C3A6FF','#8E6CF0'],['#6FDB8B','#34A853'],['#FFD36B','#FF9500'],['#7FE0E0','#30B0C7'],['#FF9FC5','#FF2D55']];
+    const grad = n=>{ let h = 0; for (const ch of n) h = (h*31 + ch.charCodeAt(0)) >>> 0; const g = GRADS[h % GRADS.length]; return 'linear-gradient(180deg,'+g[0]+','+g[1]+')'; };
+    const first = n=>String(n).split(/[\s@.]/)[0] || n;
+    const ago = s=>s < ONLINE ? 'En ligne' : s < 3600 ? 'Vu il y a '+Math.max(1, Math.round(s/60))+' min' : s < 86400 ? 'Vu il y a '+Math.round(s/3600)+' h' : 'Vu il y a '+Math.round(s/86400)+' j';
+    const ROLE = {owner:'A créé le canevas', edit:'Peut modifier', view:'Lecture seule'};
+    const bar = document.createElement('div'); bar.className = 'presence'; bar.hidden = true;
+    bar.innerHTML = '<button type="button" class="pres-stack" aria-haspopup="true" aria-expanded="false" aria-label="Personnes sur ce canevas"></button><span class="pres-txt"></span><div class="pres-pop" hidden></div>';
+    document.querySelector('#view-editor .doc-title').after(bar);
+    const stack = bar.querySelector('.pres-stack'), txt = bar.querySelector('.pres-txt'), pop = bar.querySelector('.pres-pop');
+    const av = (p, cls)=>'<span class="av'+(p.on?'':' off')+(cls||'')+'" style="background:'+grad(p.name)+'">'+esc(first(p.name).charAt(0).toUpperCase())+'<i></i></span>';
+    const list = (names)=>names.length < 2 ? names.join('') : names.length === 2 ? names.join(' et ') : names.slice(0,2).join(', ')+' et '+(names.length-2)+(names.length > 3 ? ' autres' : ' autre');
+    async function beat(away){
+      if (document.hidden && !away) return;
+      let r;
+      try { r = await api('here',{body:{id: o.id, away: !!away, name_ct: await K.encJSON(o.keyNow().key, {name: o.myName})}, keepalive: !!away}); } catch(e){ return; }
+      if (away) return;
+      const people = [];
+      for (const p of r.people){ try { people.push({name: (await K.decJSON(o.keyNow().key, p.name_ct)).name || '', role: p.role, me: p.me, ago: p.ago, on: p.ago < ONLINE}); } catch(e){} }
+      draw(people);
+    }
+    function draw(people){
+      const owner = people.find(p=>p.role === 'owner');
+      people.sort((a, b)=>(b.role === 'owner') - (a.role === 'owner') || b.me - a.me || b.on - a.on || a.ago - b.ago);
+      bar.hidden = people.length < 2 && !people.some(p=>!p.me);
+      stack.innerHTML = people.slice(0, 6).map(p=>av(p, p.me ? ' me' : '')).join('') + (people.length > 6 ? '<span class="av more">+'+(people.length-6)+'</span>' : '');
+      const here = people.filter(p=>p.on && !p.me).map(p=>first(p.name)), away = people.filter(p=>!p.on && !p.me).map(p=>first(p.name));
+      const parts = ['Créé par <b>'+esc(owner ? (owner.me ? 'vous' : owner.name) : o.owner)+'</b>'];
+      parts.push(here.length ? '<b>'+esc(list(here)).replace(/ et /g,'</b> et <b>')+'</b> '+(here.length > 1 ? 'sont' : 'est')+' sur le canevas' : 'Personne d’autre sur le canevas pour l’instant');
+      if (away.length) parts.push(esc(list(away))+' hors ligne');
+      txt.innerHTML = parts.join(' · ');
+      pop.innerHTML = '<h4>Sur ce canevas</h4>'+people.map(p=>'<div class="pres-row">'+av(p)+'<div><b>'+esc(p.name)+(p.me ? ' (vous)' : '')+'</b><small>'+ROLE[p.role]+'</small></div><span class="st'+(p.on?' on':'')+'">'+ago(p.ago)+'</span></div>').join('');
+    }
+    const setPop = open=>{ pop.hidden = !open; stack.setAttribute('aria-expanded', String(open)); };
+    stack.addEventListener('click', e=>{ e.stopPropagation(); setPop(pop.hidden); });
+    document.addEventListener('click', e=>{ if (!pop.hidden && !pop.contains(e.target)) setPop(false); });
+    document.addEventListener('keydown', e=>{ if (e.key === 'Escape' && !pop.hidden){ setPop(false); stack.focus(); } });
+    document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) beat(); });
+    window.addEventListener('pagehide', ()=>beat(true));
+    beat(); setInterval(beat, 20000);
   }
 
   // ---------- Adresses en bulles, comme dans Mail ----------
