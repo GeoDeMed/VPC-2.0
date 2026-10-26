@@ -591,11 +591,13 @@
     }
     const saved = $('saved'), myName = ME.name || ME.email;
     // base : le dernier état connu du serveur, point de départ de la fusion avec les modifications des autres.
-    let timer = null, pending = null, rev = c.rev, stopped = false, last = data, base = data || {}, busy = Promise.resolve();
+    let timer = null, pending = null, sending = 0, rev = c.rev, stopped = false, last = data, base = data || {}, busy = Promise.resolve();
+    const dirty = ()=>!stopped && (!!pending || sending > 0), sheet = savingSheet();
     const payload = async d=>({meta_ct: await K.encJSON(ck.key, {title: titleOf(d), owner: meta.owner, by: myName}), data_ct: await K.encJSON(ck.key, d)});
     async function flush(keepalive){
       if (!pending || stopped) return;
       const d = pending; pending = null; clearTimeout(timer); timer = null;
+      sending++; saved.textContent = 'Enregistrement…';
       try { rev = (await api('save',{body:Object.assign({id, rev}, await payload(d)), keepalive})).rev; base = d; live.seen(rev); if (!pending) saved.textContent = 'Enregistré'; }
       catch(e){
         if (!pending) pending = d;
@@ -605,7 +607,9 @@
         saved.textContent = e.status===401 ? 'Session expirée : rechargez la page pour vous reconnecter.' : 'Enregistrement impossible, nouvel essai…';
         if (e.status!==401) timer = setTimeout(()=>queue(()=>flush(false)), 5000);
         else stopped = true;
+        sheet.fail(saved.textContent);
       }
+      finally { sending--; if (!dirty()) sheet.done(); }
     }
     // Récupère la dernière version, la fusionne pastille par pastille avec l'écran, et enregistre le résultat s'il contient vos modifications.
     async function sync(auto){
@@ -619,7 +623,7 @@
       if (JSON.stringify(m.state) !== JSON.stringify(L)) window.__VPC_APPLY__(m.state);
       base = R; rev = c2.rev; last = m.state; live.seen(rev);
       if (c2.role !== 'view' && JSON.stringify(m.state) !== JSON.stringify(R)){ pending = m.state; await flush(false); }
-      else { pending = null; clearTimeout(timer); timer = null; if (c2.role !== 'view') saved.textContent = 'Enregistré'; }
+      else { pending = null; clearTimeout(timer); timer = null; if (c2.role !== 'view') saved.textContent = 'Enregistré'; if (!dirty()) sheet.done(); }
       if (m.conflicts) live.say(m.conflicts > 1 ? m.conflicts+' éléments modifiés des deux côtés : votre version est gardée.' : 'Un élément modifié des deux côtés : votre version est gardée.', 5000);
       else if (auto) live.say('Fusionné avec les modifications d’une autre personne.', 3500);
       else live.hide();
@@ -628,8 +632,23 @@
     const live = liveSync({id, rev: c.rev, shared: c.role !== 'owner' || (c.shares||[]).length > 0, myName,
       getRev: ()=>rev, keyNow: ()=>ck, queue, onUpdate: ()=>queue(()=>sync(false))});
     if (live.shared) presenceBar({id, myName, owner: meta.owner, keyNow: ()=>ck});
-    window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); live.active(); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 800); };
+    window.__VPC_SAVE__ = st=>{ last = pending = JSON.parse(JSON.stringify(st)); live.active(); saved.textContent = 'Modifications en cours…'; clearTimeout(timer); timer = setTimeout(()=>queue(()=>flush(false)), 300); };
     window.addEventListener('pagehide', ()=>flush(true));
+    // Fermeture de l'onglet avant la fin de l'enregistrement : envoi immédiat, fenêtre « Sauvegarde en cours » et alerte du navigateur.
+    window.addEventListener('beforeunload', e=>{
+      if (!dirty()) return;
+      sheet.show(); flush(true);
+      e.preventDefault(); e.returnValue = '';
+    });
+    // Lien interne cliqué pendant un enregistrement : on attend la fin, puis on suit le lien.
+    document.addEventListener('click', e=>{
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (!a || !dirty() || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (a.target && a.target !== '_self')) return;
+      const url = new URL(a.href, location.href);
+      if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search && url.hash)) return;
+      e.preventDefault(); sheet.show();
+      queue(()=>flush(false)).then(()=>{ if (!dirty()) sheet.done(); return sheet.wait(); }).then(ok=>{ if (ok) location.href = url.href; });
+    }, true);
     document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flush(true); });
     window.__VPC_COPY__ = async ()=>{
       try { await createCanvas(last); }
@@ -675,7 +694,7 @@
         notes.push(n);
       } else if (l){
         if (!b || !same(l, b)) notes.push(l);        // ajoutée ici, ou modifiée ici alors qu'elle a été supprimée ailleurs
-      } else if (r && !b) notes.push(r);              // ajoutée ailleurs ; supprimée ici : elle reste supprimée
+      } else if (r && (!b || !same(r, b))) notes.push(r);   // ajoutée ailleurs, ou modifiée ailleurs alors qu'elle a été supprimée ici : la modification l'emporte
     });
     const seen = new Set(); let max = notes.reduce((m, n)=>Math.max(m, +n.n || 0), 0);
     notes.forEach(n=>{ if (seen.has(n.n)) n.n = ++max; seen.add(n.n); });   // deux pastilles créées en même temps
@@ -724,6 +743,33 @@
 
   // ---------- Présence : qui est sur le canevas ----------
   // Toutes les 20 secondes (onglet visible), chacun signale qu'il est là, avec son nom chiffré par la clé du canevas.
+  // Petite fenêtre en verre « Sauvegarde en cours » avec barre de progression bleue.
+  function savingSheet(){
+    let el = null, waiters = [], hideT = null;
+    const build = ()=>{
+      el = document.createElement('div'); el.className = 'save-sheet'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+      el.innerHTML = '<div class="ss-card"><p class="ss-t">Sauvegarde en cours…</p><div class="ss-bar"><i></i></div></div>';
+      document.body.appendChild(el);
+    };
+    const settle = ok=>{ const w = waiters; waiters = []; w.forEach(f=>f(ok)); };
+    return {
+      show(){
+        if (!el) build();
+        clearTimeout(hideT); el.className = 'save-sheet on'; el.querySelector('.ss-t').textContent = 'Sauvegarde en cours…';
+      },
+      done(){
+        if (!el || !el.classList.contains('on')) return settle(true);
+        el.className = 'save-sheet on ok'; el.querySelector('.ss-t').textContent = 'Enregistré';
+        settle(true);
+        hideT = setTimeout(()=>{ el.className = 'save-sheet'; }, 900);
+      },
+      fail(msg){
+        if (el && el.classList.contains('on')){ el.classList.add('err'); el.querySelector('.ss-t').textContent = msg; hideT = setTimeout(()=>{ el.className = 'save-sheet'; }, 3500); }
+        settle(false);
+      },
+      wait(){ return new Promise(f=>{ if (!el || el.classList.contains('ok')) f(true); else waiters.push(f); }); }
+    };
+  }
   function presenceBar(o){
     const ONLINE = 45, GRADS = [['#FF9F8E','#FF7E79'],['#64B5FF','#007AFF'],['#C3A6FF','#8E6CF0'],['#6FDB8B','#34A853'],['#FFD36B','#FF9500'],['#7FE0E0','#30B0C7'],['#FF9FC5','#FF2D55']];
     const grad = n=>{ let h = 0; for (const ch of n) h = (h*31 + ch.charCodeAt(0)) >>> 0; const g = GRADS[h % GRADS.length]; return 'linear-gradient(180deg,'+g[0]+','+g[1]+')'; };

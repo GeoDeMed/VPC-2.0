@@ -381,7 +381,7 @@ try {
         case 'check':
             db()->query('SELECT COUNT(*) FROM vpc_users')->fetchColumn();
             secret();
-            out(200, ['ok' => true, 'base' => strtok(DB_DSN, ':'), 'php' => PHP_VERSION]);
+            out(200, ['ok' => true, 'base' => strtok(DB_DSN, ':'), 'php8' => PHP_VERSION_ID >= 80000]);
 
         case 'send-code':
             $email = clean_email((string) (input()['email'] ?? ''));

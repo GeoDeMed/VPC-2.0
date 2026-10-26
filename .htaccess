@@ -19,6 +19,12 @@ RedirectMatch 404 ^.*/DOSSIER-DES-DONNEES/.*$
 <IfModule mod_headers.c>
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Content-Type-Options "nosniff"
+  # Le navigateur n'accepte que les ressources du site lui-même, et le site ne peut pas être affiché dans une autre page.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  Header always set X-Frame-Options "DENY"
+  # HTTPS imposé au navigateur pendant un an pour ce sous-domaine.
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 </IfModule>
 
 <IfModule mod_mime.c>

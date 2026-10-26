@@ -41,7 +41,7 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
 
 ## 3. Vérifier
 
-1. Ouvrez `https://ADRESSE-DU-SITE/api.php?a=check`. La réponse doit contenir `"ok":true` et une version PHP 8.0 ou plus. En dessous de 8.0, réglez la version PHP du site dans l'espace client OVH ou dans le fichier `.ovhconfig` à la racine FTP.
+1. Ouvrez `https://ADRESSE-DU-SITE/api.php?a=check`. La réponse doit contenir `"ok":true` et `"php8":true` (PHP 8.0 ou plus ; la version exacte n'est plus affichée, pour ne rien révéler aux curieux). Si `"php8":false`, réglez la version PHP du site dans l'espace client OVH ou dans le fichier `.ovhconfig` à la racine FTP.
 2. Ces adresses doivent être refusées (erreur 403 ou 404) :
    - `https://ADRESSE-DU-SITE/config.php`
    - `https://ADRESSE-DU-SITE/DOSSIER-DES-DONNEES/canevas.sqlite`
@@ -88,6 +88,12 @@ Envoyez tout le contenu de ce dossier dans le dossier racine du sous-domaine (pa
 - **Inscription :** une inscription non terminée est annulée à la fermeture du navigateur, ou 3 minutes après la validation du code.
 - **Session :** 7 jours. La suppression du compte et le nouveau départ exigent un code reçu dans les 3 dernières minutes.
 - **Partage :** 50 adresses par canevas au plus, et 30 invitations par heure et par personne.
+- **En-têtes envoyés au navigateur (`.htaccess`) :**
+  - Content-Security-Policy : la page ne charge que les fichiers du site lui-même ;
+  - X-Frame-Options et frame-ancestors : le site ne peut pas être affiché dans une autre page ;
+  - Strict-Transport-Security : le navigateur impose HTTPS pendant un an pour ce sous-domaine ;
+  - Permissions-Policy : caméra, micro et position désactivés.
+- **Enregistrement :** chaque modification part 0,3 seconde après la dernière frappe. Si l'on ferme l'onglet ou quitte la page avant la fin, une petite fenêtre « Sauvegarde en cours » s'affiche et le navigateur demande confirmation. Le texte de cette confirmation est imposé par le navigateur et ne peut pas être personnalisé. Sur téléphone, le navigateur ne l'affiche pas toujours ; l'envoi part quand même à la fermeture.
 
 ## Sauvegarde
 
@@ -96,6 +102,7 @@ Les données sont dans `DOSSIER-DES-DONNEES/canevas.sqlite`, et la clé des empr
 - Sauvegardez les deux fichiers ensemble par FTP.
 - Sans `empreintes.key`, plus personne ne peut se connecter : les adresses ne seraient plus reconnues.
 - Les canevas restent chiffrés dans la sauvegarde.
+- OVH garde aussi des copies automatiques de l'espace FTP (jour même, veille, avant-veille et deux dimanches), restaurables depuis l'espace client, onglet FTP-SSH. OVH les dit non contractuelles : gardez vos propres copies ([documentation OVHcloud](https://docs.ovhcloud.com/en/guides/web-cloud/web-hosting/ftp-save-and-backup)).
 
 ## Si vous préférez MySQL
 
