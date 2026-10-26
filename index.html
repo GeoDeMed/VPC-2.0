@@ -397,8 +397,7 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 /* Collaborateurs */
 .co-body{display:grid;gap:20px}
 .co-select{font:inherit;font-size:16px;color:var(--ink);background:var(--page);border:1px solid var(--rule);border-radius:10px;padding:8px 12px;min-width:0;max-width:100%}
-.co-select:focus,#co-emails:focus{border-color:var(--ui);outline:none}
-#co-emails{font:inherit;font-size:16px;color:var(--ink);background:var(--page);border:1px solid var(--rule);border-radius:10px;padding:8px 12px;resize:vertical;min-height:72px}
+.co-select:focus{border-color:var(--ui);outline:none}
 .co-list li span{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
 .co-list .badge{margin-left:0;font-style:normal}
 .badge.st-sent{background:color-mix(in srgb,var(--muted) 16%,transparent);color:var(--muted)}
@@ -419,7 +418,28 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
   background:var(--page) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M3 6l3-3 3 3M3 10l3 3 3-3' fill='none' stroke='%2386868B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 10px center/10px 14px no-repeat}
 /* Page Inviter : mêmes dimensions que les champs de connexion */
 .co-select{font-size:17px;line-height:1.38;padding:15px 44px 15px 16px;border-radius:14px;background-position:right 16px center}
-#co-emails{font-size:17px;line-height:1.4;padding:15px 16px;border-radius:14px}
+/* Adresses en bulles, comme dans Mail */
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:56px;box-sizing:border-box;padding:9px 12px;background:var(--page);border:1px solid var(--rule);border-radius:14px;cursor:text;transition:border-color .2s,box-shadow .2s}
+.chips:focus-within{border-color:var(--ui);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui) 18%,transparent)}
+.chips input{flex:1 1 160px;min-width:120px;border:0;outline:0;background:transparent;font:inherit;font-size:17px;line-height:1.4;color:var(--ink);padding:6px 4px}
+.chips input.bad{color:#FF3B30}
+.chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;font-size:15px;line-height:1.3;color:var(--ui);background:color-mix(in srgb,var(--ui) 13%,transparent);border-radius:980px;padding:5px 4px 5px 11px;cursor:default;user-select:none;-webkit-user-select:none;overflow-wrap:anywhere;animation:chip-in .28s cubic-bezier(.16,1,.3,1);transition:background .15s,color .15s}
+.chip.sel{background:var(--ui);color:#fff}
+.chip-x{appearance:none;border:0;background:transparent;color:inherit;opacity:.55;font:inherit;font-size:17px;line-height:1;width:22px;height:22px;border-radius:50%;padding:0;cursor:pointer;display:grid;place-items:center}
+.chip-x:hover,.chip.sel .chip-x{opacity:1}
+@keyframes chip-in{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.chip{animation:none}}
+.co-tip{margin:-4px 0 4px}
+/* Vos collaborateurs : une fiche par personne */
+.people{display:grid;gap:14px}
+.person{border:1px solid var(--rule);border-radius:16px;padding:14px 16px;background:var(--page)}
+.person-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.person-head strong{display:block;font-weight:600;overflow-wrap:anywhere}
+.person-head small{color:var(--muted);font-size:13px}
+.avatar{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;background:linear-gradient(180deg,#A1A1A6,#86868B)}
+.person .co-list a{color:var(--ink);text-decoration:none;font-weight:500}
+.person .co-list a:hover{color:var(--ui)}
+.person > .row{margin:8px 0 0}
 /* Collaboration : bulle bleue en verre dépoli, qui se déplie depuis le haut de l'écran */
 .sync-bubble{position:fixed;top:12px;left:50%;z-index:60;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);box-sizing:border-box;
   padding:8px 8px 8px 18px;border-radius:999px;color:#fff;font-size:14px;line-height:1.3;
@@ -460,7 +480,7 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
     <div class="menu" id="menu" hidden>
       <a class="menu-main" href="./">Mes canevas</a>
       <a class="menu-item" href="?v=partages">Partagés avec moi</a>
-      <a class="menu-item" id="menu-collab" href="?v=collaborateurs">Inviter un collaborateur</a>
+      <a class="menu-item" id="menu-collab" href="?v=collaborer">Collaborer</a>
       <a class="menu-account" href="?v=compte">Mon compte</a>
       <hr class="menu-sep">
       <button class="menu-logout" id="b-logout" type="button">Se déconnecter</button>
@@ -617,31 +637,27 @@ code.cmd{display:block;font-family:Menlo,ui-monospace,monospace;font-size:13px;b
 </main>
 
 <main class="app-view" id="view-collab" hidden>
-  <div class="list-head"><div><p class="eyebrow">Collaborateurs</p><h1>Inviter des collaborateurs</h1></div></div>
+  <div class="list-head"><div><p class="eyebrow">Collaborer</p><h1>Travailler à plusieurs</h1></div></div>
   <p class="hint" id="co-empty" hidden>Vous n'avez pas encore de canevas. Créez-en un depuis <a href="./">Mes canevas</a>, puis revenez ici pour inviter des collaborateurs.</p>
   <div class="co-body" id="co-body">
     <section class="acc-sec">
-      <form class="login-form" onsubmit="return false">
-        <label for="co-canvas">Canevas</label>
-        <select id="co-canvas" class="co-select"></select>
-      </form>
-      <p class="hint">Seules les adresses de la liste, et vous, peuvent ouvrir ce canevas. Chacune reçoit le lien par e-mail et se connecte avec un code envoyé à cette adresse.</p>
-    </section>
-    <section class="acc-sec">
       <h2>Inviter</h2>
       <form class="login-form" id="co-form">
-        <label for="co-emails">Adresses e-mail, séparées par une virgule, un espace ou un retour à la ligne</label>
-        <textarea id="co-emails" rows="3" autocomplete="off" spellcheck="false" placeholder="prenom.nom@exemple.fr, autre.personne@exemple.fr"></textarea>
+        <label for="co-canvas">Canevas</label>
+        <select id="co-canvas" class="co-select"></select>
+        <label for="co-input">Adresses e-mail</label>
+        <div class="chips" id="co-chips"><input id="co-input" type="email" inputmode="email" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="prenom.nom@exemple.fr"></div>
+        <p class="hint co-tip">Validez chaque adresse avec Entrée, une virgule ou un espace. Touchez une bulle puis Effacer pour la retirer.</p>
         <label for="co-role">Droit</label>
         <select id="co-role" class="co-select"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select>
-        <p class="row"><button class="btn primary" type="submit" disabled>Inviter</button><span class="ok-mark" hidden aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></p>
+        <p class="row"><button class="btn primary" type="submit" disabled>Inviter</button><button class="btn ghostb" id="co-copylink" type="button">Copier le lien du canevas</button><span class="ok-mark" hidden aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></p>
       </form>
+      <p class="hint">Seules les personnes invitées, et vous, peuvent ouvrir le canevas. Chacune reçoit le lien par e-mail et se connecte avec un code envoyé à son adresse.</p>
     </section>
     <section class="acc-sec">
-      <h2>Collaborateurs de ce canevas</h2>
-      <ul class="share-list co-list" id="co-list"></ul>
-      <p class="hint">Invitation envoyée : la personne n'a pas encore de compte. En attente : son compte existe, son accès est transmis dès que vous ouvrez cette page, le canevas ou votre liste. Accès actif : elle peut ouvrir le canevas. Seul le créateur du canevas peut retirer un collaborateur.</p>
-      <p class="row"><a class="btn ghostb" id="co-open" href="./">Ouvrir le canevas</a><button class="btn ghostb" id="co-copylink" type="button">Copier le lien du canevas</button></p>
+      <h2>Vos collaborateurs</h2>
+      <div class="people" id="co-people"></div>
+      <p class="hint">Invitation envoyée : la personne n'a pas encore de compte. En attente : son compte existe, son accès lui est transmis dès que vous ouvrez cette page, le canevas ou votre liste. Accès actif : elle peut ouvrir le canevas. Retirer une personne change la clé du canevas : elle ne peut plus rien lire de nouveau.</p>
     </section>
   </div>
   <p class="status" id="co-msg" role="status" aria-live="polite"></p>
@@ -1253,7 +1269,7 @@ window.__VPC_START__ = function(){
 (function(){
   const $ = id=>document.getElementById(id);
   const params = new URLSearchParams(location.search);
-  const cid = params.get('c'), view = params.get('v');
+  const cid = params.get('c'), view = params.get('v') === 'collaborateurs' ? 'collaborer' : params.get('v');
   async function api(a, opts){
     const o = {credentials:'same-origin', headers:{}};
     if (opts && opts.body !== undefined){ o.method='POST'; o.headers['Content-Type']='application/json'; o.headers['X-VPC']='1'; o.body=JSON.stringify(opts.body); if (opts.keepalive) o.keepalive = true; }
@@ -1861,7 +1877,7 @@ window.__VPC_START__ = function(){
     show('view-editor');
     if (c.role !== 'view') saved.textContent = 'Enregistré';
     if (c.role === 'owner'){
-      $('menu-collab').href = '?v=collaborateurs&c='+encodeURIComponent(id);
+      $('menu-collab').href = '?v=collaborer&c='+encodeURIComponent(id);
       grantPending(id, ck, c.shares).catch(()=>{});
     }
     window.__VPC_START__();
@@ -1943,21 +1959,95 @@ window.__VPC_START__ = function(){
     };
   }
 
-  // ---------- Collaborateurs ----------
+  // ---------- Adresses en bulles, comme dans Mail ----------
+  // Une adresse complète devient une bulle bleue : elle se retire d'un bloc (touchée puis Effacer, ou le ×).
+  const EMAIL_RE = /^[^@\s<>,;"']+@[^@\s<>,;"']+\.[^@\s<>,;"'.]+$/;
+  function chipField(box, input, onChange){
+    let items = [], sel = -1;
+    const draw = ()=>{
+      box.querySelectorAll('.chip').forEach(c=>c.remove());
+      items.forEach((e, k)=>{
+        const c = document.createElement('span');
+        c.className = 'chip' + (k === sel ? ' sel' : ''); c.textContent = e;
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'chip-x'; x.tabIndex = -1;
+        x.setAttribute('aria-label', 'Retirer '+e); x.textContent = '×';
+        x.addEventListener('mousedown', ev=>ev.preventDefault());
+        x.addEventListener('click', ev=>{ ev.stopPropagation(); remove(k); });
+        c.addEventListener('mousedown', ev=>ev.preventDefault());
+        c.addEventListener('click', ()=>{ sel = sel === k ? -1 : k; draw(); input.focus(); });
+        c.appendChild(x); box.insertBefore(c, input);
+      });
+      input.placeholder = items.length ? '' : 'prenom.nom@exemple.fr';
+      onChange();
+    };
+    const remove = k=>{ items.splice(k, 1); sel = -1; draw(); input.focus(); };
+    // Ajoute toutes les adresses trouvées dans un texte (y compris « Nom <adresse> ») ; renvoie ce qui n'en est pas une.
+    const take = text=>{
+      const rest = []; let found = 0;
+      for (let w of String(text).split(/[\s,;]+/)){
+        w = w.replace(/^[<("']+|[>)"'.]+$/g, '');
+        if (!w) continue;
+        const e = norm(w);
+        if (EMAIL_RE.test(e)){ found++; if (!items.includes(e)) items.push(e); } else rest.push(w);
+      }
+      sel = -1;
+      return found ? rest.filter(w=>w.includes('@')) : rest; // les noms autour d'une adresse (« Nom <adresse> ») sont ignorés
+    };
+    const commit = ()=>{
+      const v = input.value; if (!v.trim()) return true;
+      const rest = take(v); input.value = rest.join(' ');
+      input.classList.toggle('bad', rest.length > 0); draw();
+      return !rest.length;
+    };
+    input.addEventListener('keydown', e=>{
+      if (e.isComposing) return;
+      if (e.key === 'Enter' || e.key === ',' || e.key === ';' || e.key === ' ' || (e.key === 'Tab' && input.value.trim())){
+        if (e.key === 'Enter' && !input.value.trim() && items.length) return; // Entrée sur un champ vide : envoie le formulaire
+        e.preventDefault(); commit(); return;
+      }
+      if ((e.key === 'Backspace' || e.key === 'Delete') && !input.value){
+        if (sel >= 0){ e.preventDefault(); remove(sel); }
+        else if (e.key === 'Backspace' && items.length){ e.preventDefault(); sel = items.length - 1; draw(); }
+        return;
+      }
+      if (e.key === 'ArrowLeft' && !input.value && items.length){ sel = sel < 0 ? items.length - 1 : Math.max(0, sel - 1); draw(); return; }
+      if (e.key === 'ArrowRight' && sel >= 0){ sel = sel + 1 < items.length ? sel + 1 : -1; draw(); return; }
+      if (e.key === 'Escape' && sel >= 0){ sel = -1; draw(); return; }
+      if (sel >= 0 && e.key.length === 1){ sel = -1; draw(); }
+    });
+    // Claviers mobiles : les touches n'arrivent pas toujours, on regarde donc aussi le texte saisi.
+    input.addEventListener('input', ()=>{
+      input.classList.remove('bad');
+      if (/[\s,;]/.test(input.value)){ const v = input.value, end = /[\s,;]$/.test(v);
+        const parts = v.split(/[\s,;]+/); const last = end ? '' : parts.pop();
+        const rest = take(parts.join(' ')); input.value = rest.concat(last ? [last] : []).join(' ');
+        input.classList.toggle('bad', rest.length > 0); draw(); }
+      else onChange();
+    });
+    input.addEventListener('paste', e=>{
+      const t = (e.clipboardData || window.clipboardData).getData('text');
+      if (!t) return; e.preventDefault();
+      const rest = take(input.value + ' ' + t); input.value = rest.join(' ');
+      input.classList.toggle('bad', rest.length > 0); draw();
+    });
+    input.addEventListener('blur', ()=>{ commit(); if (sel >= 0){ sel = -1; draw(); } });
+    box.addEventListener('click', e=>{ if (e.target === box) input.focus(); });
+    return {
+      get list(){ return items.slice(); },
+      commit, pending: ()=>input.value.trim() !== '',
+      set(list){ items = list.slice(); sel = -1; input.value = ''; input.classList.remove('bad'); draw(); }
+    };
+  }
+
+  // ---------- Collaborer ----------
   async function showCollab(pre){
     show('view-collab');
-    const sel = $('co-canvas'), list = $('co-list'), msg = $('co-msg'), form = $('co-form'), ta = $('co-emails');
-    let r;
-    try { r = await api('list'); } catch(e){ msg.textContent = 'Impossible de charger vos canevas.'; return; }
-    const own = [];
-    for (const c of r.canvases){ try { own.push({id: c.id, title: (await openCanvas(c)).meta.title}); } catch(e){} }
-    if (!own.length){ $('co-body').hidden = true; $('co-empty').hidden = false; return; }
-    sel.innerHTML = own.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.title)+'</option>').join('');
-    if (pre && own.some(o=>o.id===pre)) sel.value = pre;
-    let cur = null, busy = Promise.resolve();
+    const sel = $('co-canvas'), people = $('co-people'), msg = $('co-msg'), form = $('co-form');
+    let own = [], busy = Promise.resolve();
     const queue = fn=>(busy = busy.then(fn, fn));
-    const splitEmails = t=>[...new Set(String(t).split(/[\s,;]+/).map(norm).filter(Boolean))];
-    const upd = guard(form, ()=>!!cur && splitEmails(ta.value).length > 0);
+    const statusOf = it=>!it.pending ? ['st-ok','Accès actif'] : it.pub ? ['st-wait','En attente'] : ['st-sent','Invitation envoyée'];
+    const chips = chipField($('co-chips'), $('co-input'), ()=>upd());
+    const upd = guard(form, ()=>own.length > 0 && (chips.list.length > 0 || chips.pending()));
 
     // Le canevas tel qu'il est sur le serveur maintenant : clé, contenu et liste de partage.
     async function fetchCanvas(id){
@@ -1965,45 +2055,74 @@ window.__VPC_START__ = function(){
       const ck = await K.canvasKey(await K.unwrap(ME, c.wrap));
       return {c, ck};
     }
-    async function render(items){
-      cur.shares = items;
-      list.innerHTML = items.length ? '' : '<li><span>Ce canevas n\'est encore partagé avec personne.</span></li>';
-      for (const it of items){
-        let label = '(adresse illisible)';
-        try { label = new TextDecoder().decode(await K.dec(cur.ck.key, it.label_ct)); } catch(e){}
-        it.email = label;
-        const st = !it.pending ? ['st-ok','Accès actif'] : it.pub ? ['st-wait','En attente'] : ['st-sent','Invitation envoyée'];
-        const li = document.createElement('li');
-        li.innerHTML = '<span>'+esc(label)+'<i class="badge '+st[0]+'">'+st[1]+'</i></span><div><select aria-label="Droit de '+esc(label)+'"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select><button class="btn warn" type="button">Retirer</button></div>';
-        const s = li.querySelector('select'); s.value = it.role;
-        s.addEventListener('change', ()=>queue(async ()=>{
-          try { await render((await api('share-role',{body:{id: cur.id, h: it.h, role: s.value}})).shares); msg.textContent = 'Droit modifié pour '+label+'.'; }
-          catch(e){ msg.textContent = errText(e); s.value = it.role; }
-        }));
-        twoStep(li.querySelector('button'), 'Retirer', 'Confirmer', ()=>queue(()=>removeShare(it)));
-        list.appendChild(li);
+    // Tous vos canevas, avec leurs invités en clair (déchiffrés ici, dans le navigateur).
+    async function loadAll(){
+      const r = await api('list'), out = [];
+      for (const c of r.canvases){
+        try {
+          const ck = await K.canvasKey(await K.unwrap(ME, c.wrap));
+          const meta = await K.decJSON(ck.key, c.meta_ct);
+          let shares = c.shares;
+          const g = await grantPending(c.id, ck, shares).catch(()=>null);
+          if (g) shares = g;
+          out.push({id: c.id, title: meta.title || 'Sans titre', ck, shares: await labels(ck, shares)});
+        } catch(e){}
+      }
+      own = out;
+    }
+    async function labels(ck, shares){
+      for (const it of shares){ try { it.email = new TextDecoder().decode(await K.dec(ck.key, it.label_ct)); } catch(e){ it.email = '(adresse illisible)'; } }
+      return shares;
+    }
+    function fillSelect(){
+      const keep = sel.value || pre;
+      sel.innerHTML = own.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.title)+'</option>').join('');
+      if (keep && own.some(o=>o.id===keep)) sel.value = keep;
+    }
+    // Une fiche par personne : ses canevas, son statut et son droit sur chacun.
+    function drawPeople(){
+      const byEmail = new Map();
+      for (const o of own) for (const it of o.shares){
+        if (!byEmail.has(it.email)) byEmail.set(it.email, []);
+        byEmail.get(it.email).push({o, it});
+      }
+      people.innerHTML = '';
+      if (!byEmail.size){ people.innerHTML = '<p class="hint">Vous n\'avez encore invité personne.</p>'; return; }
+      for (const [email, rows] of [...byEmail].sort((a, b)=>a[0].localeCompare(b[0]))){
+        const card = document.createElement('div'); card.className = 'person';
+        const n = rows.length;
+        card.innerHTML = '<div class="person-head"><span class="avatar" aria-hidden="true">'+esc(email[0].toUpperCase())+'</span><div><strong>'+esc(email)+'</strong><small>'+n+' canevas'+'</small></div></div><ul class="share-list co-list"></ul>';
+        const ul = card.querySelector('ul');
+        for (const {o, it} of rows){
+          const st = statusOf(it), li = document.createElement('li');
+          li.innerHTML = '<span><a href="?c='+encodeURIComponent(o.id)+'">'+esc(o.title)+'</a><i class="badge '+st[0]+'">'+st[1]+'</i></span><div><select aria-label="Droit de '+esc(email)+' sur '+esc(o.title)+'"><option value="view">Lecture seule</option><option value="edit">Peut modifier</option></select><button class="btn warn" type="button">Retirer</button></div>';
+          const s = li.querySelector('select'); s.value = it.role;
+          s.addEventListener('change', ()=>queue(async ()=>{
+            try { o.shares = await labels(o.ck, (await api('share-role',{body:{id: o.id, h: it.h, role: s.value}})).shares); msg.textContent = 'Droit modifié pour '+email+' sur « '+o.title+' ».'; }
+            catch(e){ msg.textContent = errText(e); s.value = it.role; }
+            drawPeople();
+          }));
+          twoStep(li.querySelector('button'), 'Retirer', 'Confirmer', ()=>queue(async ()=>{ await removeShare(o, it); drawPeople(); }));
+          ul.appendChild(li);
+        }
+        if (n > 1){
+          const p = document.createElement('p'); p.className = 'row';
+          p.innerHTML = '<button class="btn warn" type="button">Retirer de tous les canevas</button>';
+          twoStep(p.querySelector('button'), 'Retirer de tous les canevas', 'Confirmer le retrait de '+n+' canevas', ()=>queue(async ()=>{
+            let ok = 0; for (const {o, it} of rows) if (await removeShare(o, it, true)) ok++;
+            msg.textContent = ok === n ? email+' n\'a plus accès à aucun de vos canevas.' : msg.textContent;
+            drawPeople();
+          }));
+          card.appendChild(p);
+        }
+        people.appendChild(card);
       }
     }
-    async function load(id){
-      cur = null; upd(); msg.textContent = '';
-      list.innerHTML = '<li><span>Chargement…</span></li>';
-      $('co-open').href = '?c='+encodeURIComponent(id);
-      $('menu-collab').href = '?v=collaborateurs&c='+encodeURIComponent(id);
-      try { history.replaceState(null, '', '?v=collaborateurs&c='+encodeURIComponent(id)); } catch(e){}
-      try {
-        const {c, ck} = await fetchCanvas(id);
-        cur = {id, ck, shares: c.shares};
-        await render(c.shares);
-        const g = await grantPending(id, ck, c.shares).catch(()=>null);
-        if (g) await render(g);
-      } catch(e){ list.innerHTML = ''; msg.textContent = 'Ce canevas n\'a pas pu être chargé. '+errText(e); }
-      upd();
-    }
     // Retirer quelqu'un change la clé du canevas : la personne retirée ne peut plus rien déchiffrer de nouveau.
-    async function removeShare(it){
-      msg.textContent = 'Retrait et rechiffrement…';
+    async function removeShare(o, it, quiet){
+      msg.textContent = 'Retrait de '+it.email+' sur « '+o.title+' »…';
       try {
-        const {c, ck} = await fetchCanvas(cur.id);
+        const {c, ck} = await fetchCanvas(o.id);
         const meta = await K.decJSON(ck.key, c.meta_ct), data = await K.decJSON(ck.key, c.data_ct);
         const nk = await K.newCanvasKey(), rest = {};
         for (const s of c.shares){
@@ -2011,47 +2130,58 @@ window.__VPC_START__ = function(){
           let email = ''; try { email = new TextDecoder().decode(await K.dec(ck.key, s.label_ct)); } catch(e){}
           rest[s.h] = {wrap: s.pub ? await K.wrapFor(s.pub, nk.raw) : null, label_ct: await K.enc(nk.key, K.te.encode(email))};
         }
-        const r = await api('rekey',{body:{id: cur.id, rev: c.rev, remove: it.h, wrap: await K.ownerWrap(ME, nk.raw), shares: rest,
+        const r = await api('rekey',{body:{id: o.id, rev: c.rev, remove: it.h, wrap: await K.ownerWrap(ME, nk.raw), shares: rest,
           meta_ct: await K.encJSON(nk.key, meta), data_ct: await K.encJSON(nk.key, data)}});
-        cur.ck = nk; await render(r.shares); msg.textContent = it.email+' n\'a plus accès à ce canevas.';
-      } catch(e){ msg.textContent = e.status===409 ? e.message+' Réessayez.' : 'Le retrait a échoué. '+errText(e); }
+        o.ck = nk; o.shares = await labels(nk, r.shares);
+        if (!quiet) msg.textContent = it.email+' n\'a plus accès à « '+o.title+' ».';
+        return true;
+      } catch(e){ msg.textContent = e.status===409 ? e.message+' Réessayez.' : 'Le retrait a échoué. '+errText(e); return false; }
     }
     form.onsubmit = ev=>{
       ev.preventDefault();
-      const emails = splitEmails(ta.value), role = $('co-role').value;
-      if (!cur || !emails.length) return;
-      const bad = emails.filter(e=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
-      if (bad.length){ msg.textContent = 'Adresse non valide : '+bad.join(', ')+'.'; return; }
+      const o = own.find(x=>x.id===sel.value);
+      if (!o) return;
+      if (!chips.commit()){ msg.textContent = 'Adresse non valide : '+$('co-input').value+'.'; return; }
+      const emails = chips.list, role = $('co-role').value;
+      if (!emails.length) return;
       form.querySelector('button[type=submit]').disabled = true;
       queue(async ()=>{
-        const ok = [], mailFail = [], errs = [];
-        let shares = cur.shares;
+        const ok = [], mailFail = [], errs = [], left = [];
+        let shares = o.shares;
         for (const email of emails){
           msg.textContent = 'Invitation de '+email+'…';
           try {
-            const r = await api('share-add',{body:{id: cur.id, email, role, from: ME.email, label_ct: await K.enc(cur.ck.key, K.te.encode(email))}});
+            const r = await api('share-add',{body:{id: o.id, email, role, from: ME.email, label_ct: await K.enc(o.ck.key, K.te.encode(email))}});
             shares = r.shares; (r.notified ? ok : mailFail).push(email);
-          } catch(e){ errs.push(email+' : '+errText(e)); }
+          } catch(e){ errs.push(email+' : '+errText(e)); if (e.status !== 409) left.push(email); }
         }
-        const g = await grantPending(cur.id, cur.ck, shares).catch(()=>null);
-        await render(g || shares);
+        const g = await grantPending(o.id, o.ck, shares).catch(()=>null);
+        o.shares = await labels(o.ck, g || shares);
+        drawPeople();
         const parts = [];
         if (ok.length) parts.push((ok.length>1 ? 'Invitations envoyées à ' : 'Invitation envoyée à ')+ok.join(', ')+'.');
         if (mailFail.length) parts.push('Accès ajouté pour '+mailFail.join(', ')+', mais l\'e-mail n\'est pas parti : envoyez le lien vous-même.');
         if (errs.length) parts.push(errs.join(' '));
         msg.textContent = parts.join(' ');
-        if (!errs.length){ ta.value = ''; $('co-role').value = 'view'; done(form); }
+        chips.set(left);
+        if (!left.length){ $('co-role').value = 'view'; done(form); }
         upd();
       });
     };
-    sel.onchange = ()=>queue(()=>load(sel.value));
+    sel.onchange = ()=>{
+      $('menu-collab').href = '?v=collaborer&c='+encodeURIComponent(sel.value);
+      try { history.replaceState(null, '', '?v=collaborer&c='+encodeURIComponent(sel.value)); } catch(e){}
+    };
     $('co-copylink').onclick = async ()=>{
-      if (!cur) return;
-      const link = location.origin + location.pathname + '?c=' + encodeURIComponent(cur.id);
-      try { await navigator.clipboard.writeText(link); msg.textContent = 'Lien copié. Il ne s\'ouvre que pour vous et les adresses de la liste.'; }
+      if (!sel.value) return;
+      const link = location.origin + location.pathname + '?c=' + encodeURIComponent(sel.value);
+      try { await navigator.clipboard.writeText(link); msg.textContent = 'Lien copié. Il ne s\'ouvre que pour vous et les personnes invitées.'; }
       catch(e){ msg.textContent = link; }
     };
-    await queue(()=>load(sel.value));
+    people.innerHTML = '<p class="hint">Chargement…</p>';
+    try { await queue(loadAll); } catch(e){ people.innerHTML = ''; msg.textContent = 'Impossible de charger vos canevas. '+errText(e); return; }
+    if (!own.length){ $('co-body').hidden = true; $('co-empty').hidden = false; return; }
+    fillSelect(); sel.onchange(); drawPeople(); upd();
   }
 
   $('b-logout').addEventListener('click', logout);
@@ -2096,7 +2226,7 @@ window.__VPC_START__ = function(){
     document.querySelectorAll('#menu a').forEach(a=>{ const v = new URLSearchParams(a.getAttribute('href').split('?')[1]||'').get('v');
       if ((v || null) === (cid && !view ? '__' : view)) a.setAttribute('aria-current', 'page'); });
     if (view === 'compte') return showAccount();
-    if (view === 'collaborateurs') return showCollab(cid);
+    if (view === 'collaborer') return showCollab(cid);
     if (view === 'partages') return showList(true);
     if (cid) showEditor(cid); else showList();
   }
